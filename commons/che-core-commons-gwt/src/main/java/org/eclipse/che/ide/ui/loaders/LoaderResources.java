@@ -40,7 +40,10 @@ public interface LoaderResources extends ClientBundle {
     @Source({"org/eclipse/che/ide/ui/constants.css", "IdeLoader.css", "org/eclipse/che/ide/api/ui/style.css"})
     PinionCss Css();
 
+    @Source("org/eclipse/che/ide/ui/loaders/initializationLoader/loaderIcon.svg")
+    SVGResource loaderIcon();
+
     @Source("org/eclipse/che/ide/ui/loaders/initializationLoader/expansionIcon.svg")
-    SVGResource expansionImage();
+    SVGResource expansionIcon();
 
 }

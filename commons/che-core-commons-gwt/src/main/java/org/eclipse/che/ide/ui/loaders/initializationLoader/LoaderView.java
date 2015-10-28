@@ -12,6 +12,7 @@ package org.eclipse.che.ide.ui.loaders.initializationLoader;
 
 import com.google.gwt.user.client.ui.IsWidget;
 
+
 /**
  * View of {@link LoaderPresenter}.
  *
@@ -20,58 +21,23 @@ import com.google.gwt.user.client.ui.IsWidget;
 public interface LoaderView extends IsWidget {
     interface ActionDelegate {
         /**
-         * Performs any actions appropriate in response to the user having clicked the 'Close' button.
+         * Performs any actions appropriate in response to the user having clicked the expander area.
          */
-        void onCloseClicked();
-
-        /**
-         * Performs any actions appropriate in response to the user having clicked the 'Details'.
-         */
-        void onDetailsClicked();
+        void onExpanderClicked();
     }
+    void addOperation(String operation);
 
-    /** Expand Details area. */
-    void expandDetails();
-
-    /** Collapse Details area. */
-    void collapseDetails();
+    void setCurrentOperation(String operation);
 
     /** Sets the delegate to receive events from this view. */
     void setDelegate(ActionDelegate delegate);
 
-    /**
-     * Print operation to operation panel and details area.
-     *
-     * @param info
-     *         information about the operation.
-     */
-    void print(OperationInfo info);
-
-    /**
-     * Print operation only to details area.
-     *
-     * @param info
-     *         information about the operation.
-     */
-    void printToDetails(OperationInfo info);
-
-    /** Scrolls details area to bottom. */
-    void scrollBottom();
-
-    /** Show loader and print operation to operation panel and details area. */
-    void show(OperationInfo info);
-
     /** Hide loader */
     void hide();
 
-    /** Refresh details area(after change status, for example). */
-    void update();
+    /** Expand Operations area. */
+    void expandOperations();
 
-    /**
-     * Change the enable state of the close button.
-     *
-     * @param enabled
-     *         <code>true</code> to enable the button, <code>false</code> to disable it
-     */
-    void setEnabledCloseButton(boolean enabled);
+    /** Collapse Operations area. */
+    void collapseOperations();
 }

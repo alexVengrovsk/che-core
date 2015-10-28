@@ -84,7 +84,7 @@ public class StartWorkspacePresenterTest {
         when(browserQueryFieldRenderer.getWorkspaceName()).thenReturn("test");
         when(widgetFactory.create(workspaceDto)).thenReturn(widget);
 
-        presenter.show(Arrays.asList(workspaceDto), callback, operationInfo);
+        presenter.show(Arrays.asList(workspaceDto), callback);
 
         verify(browserQueryFieldRenderer).getWorkspaceName();
         verify(widgetFactory).create(workspaceDto);
@@ -102,7 +102,7 @@ public class StartWorkspacePresenterTest {
         when(widgetFactory.create(workspaceDto)).thenReturn(widget);
         when(workspaceDto.getName()).thenReturn("test");
 
-        presenter.show(Arrays.asList(workspaceDto), callback, operationInfo);
+        presenter.show(Arrays.asList(workspaceDto), callback);
 
         presenter.onStartWorkspaceClicked();
 
@@ -115,12 +115,12 @@ public class StartWorkspacePresenterTest {
     public void onCreateWorkspaceButtonShouldBeClicked() {
         when(browserQueryFieldRenderer.getWorkspaceName()).thenReturn("test");
         when(widgetFactory.create(workspaceDto)).thenReturn(widget);
-        presenter.show(Arrays.asList(workspaceDto), callback, operationInfo);
+        presenter.show(Arrays.asList(workspaceDto), callback);
 
         presenter.onCreateWorkspaceClicked();
 
         verify(view).hide();
-        verify(createWorkspacePresenter).show(operationInfo, callback);
+        verify(createWorkspacePresenter).show(callback);
     }
 
     @Test
@@ -145,7 +145,7 @@ public class StartWorkspacePresenterTest {
         presenter.onWorkspaceSelected(workspaceDto);
 
         verify(wsComponentProvider).get();
-        verify(workspaceComponent).setCurrentWorkspace(eq(workspaceDto), Matchers.<OperationInfo>anyObject());
+        verify(workspaceComponent).setCurrentWorkspace(eq(workspaceDto));
         verify(view).hide();
     }
 
@@ -156,13 +156,13 @@ public class StartWorkspacePresenterTest {
         when(browserQueryFieldRenderer.getWorkspaceName()).thenReturn("test");
         when(wsComponentProvider.get()).thenReturn(workspaceComponent);
 
-        presenter.show(Arrays.asList(workspaceDto), callback, operationInfo);
+        presenter.show(Arrays.asList(workspaceDto), callback);
         presenter.onWorkspaceSelected(workspaceDto);
         reset(workspaceDto);
 
         presenter.onStartWorkspaceClicked();
 
-        verify(loaderPresenter).show(operationInfo);
+//        verify(loaderPresenter).show(operationInfo);
 
         verify(wsComponentProvider).get();
 

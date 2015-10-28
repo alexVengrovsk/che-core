@@ -17,7 +17,6 @@ import com.google.inject.Provider;
 import com.google.inject.Singleton;
 
 import org.eclipse.che.api.machine.gwt.client.RecipeServiceClient;
-import org.eclipse.che.api.machine.shared.dto.CommandDto;
 import org.eclipse.che.api.machine.shared.dto.LimitsDto;
 import org.eclipse.che.api.machine.shared.dto.MachineConfigDto;
 import org.eclipse.che.api.machine.shared.dto.MachineSourceDto;
@@ -34,6 +33,7 @@ import org.eclipse.che.ide.CoreLocalizationConstant;
 import org.eclipse.che.ide.bootstrap.WorkspaceComponent;
 import org.eclipse.che.ide.core.Component;
 import org.eclipse.che.ide.dto.DtoFactory;
+import org.eclipse.che.ide.ui.loaders.initializationLoader.InitialLoadingInfo;
 import org.eclipse.che.ide.ui.loaders.initializationLoader.LoaderPresenter;
 import org.eclipse.che.ide.ui.loaders.initializationLoader.OperationInfo;
 import org.eclipse.che.ide.workspace.BrowserQueryFieldRenderer;
@@ -43,6 +43,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static org.eclipse.che.ide.ui.loaders.initializationLoader.InitialLoadingInfo.Operations.WORKSPACE_BOOTING;
+import static org.eclipse.che.ide.ui.loaders.initializationLoader.OperationInfo.Status.ERROR;
 
 /**
  * The class contains business logic which allow to create user workspace if it doesn't exist.
@@ -63,7 +66,8 @@ public class CreateWorkspacePresenter implements CreateWorkspaceView.ActionDeleg
     static final int    SKIP_COUNT  = 0;
     static final int    MAX_COUNT   = 100;
 
-    private final CreateWorkspaceView          view;
+    private final CreateWorkspaceView view;
+    private final InitialLoadingInfo initialLoadingInfo;
     private final LoaderPresenter              loader;
     private final DtoFactory                   dtoFactory;
     private final WorkspaceServiceClient       workspaceClient;
@@ -72,9 +76,9 @@ public class CreateWorkspacePresenter implements CreateWorkspaceView.ActionDeleg
     private final RecipeServiceClient          recipeService;
     private final BrowserQueryFieldRenderer    browserQueryFieldRenderer;
 
-    private OperationInfo                  operationInfo;
     private Callback<Component, Exception> callback;
     private List<RecipeDescriptor>         recipes;
+    private OperationInfo                  startWorkspaceOperation;
 
     @Inject
     public CreateWorkspacePresenter(CreateWorkspaceView view,
@@ -84,8 +88,10 @@ public class CreateWorkspacePresenter implements CreateWorkspaceView.ActionDeleg
                                     CoreLocalizationConstant locale,
                                     Provider<WorkspaceComponent> wsComponentProvider,
                                     RecipeServiceClient recipeService,
-                                    BrowserQueryFieldRenderer browserQueryFieldRenderer) {
+                                    BrowserQueryFieldRenderer browserQueryFieldRenderer,
+                                    InitialLoadingInfo initialLoadingInfo) {
         this.view = view;
+        this.initialLoadingInfo = initialLoadingInfo;
         this.view.setDelegate(this);
 
         this.loader = loader;
@@ -100,14 +106,13 @@ public class CreateWorkspacePresenter implements CreateWorkspaceView.ActionDeleg
     /**
      * Shows special dialog window which allows set up workspace which will be created.
      *
-     * @param operationInfo
-     *         info which needs for displaying information about creating workspace
      * @param callback
      *         callback which is necessary to notify that workspace component started or failed
      */
-    public void show(OperationInfo operationInfo, final Callback<Component, Exception> callback) {
-        this.operationInfo = operationInfo;
+    public void show(final Callback<Component, Exception> callback) {
         this.callback = callback;
+        this.startWorkspaceOperation = initialLoadingInfo.getOperation(WORKSPACE_BOOTING);
+
 
         Promise<List<RecipeDescriptor>> recipes = recipeService.getRecipes(SKIP_COUNT, MAX_COUNT);
 
@@ -168,25 +173,23 @@ public class CreateWorkspacePresenter implements CreateWorkspaceView.ActionDeleg
     /** {@inheritDoc} */
     @Override
     public void onCreateButtonClicked() {
-        loader.show(operationInfo);
+        loader.showProgressLoading(initialLoadingInfo);
 
         view.hide();
 
-        createWorkspace(operationInfo);
+        createWorkspace();
     }
 
-    private void createWorkspace(final OperationInfo getWsOperation) {
+    private void createWorkspace() {
         WorkspaceConfigDto workspaceConfig = getWorkspaceConfig();
 
-        final OperationInfo createWsOperation = new OperationInfo(locale.creatingWorkspace(), OperationInfo.Status.IN_PROGRESS, loader);
+//        final OperationInfo createWsOperation = new OperationInfo(InitialLoadingInfo.Operations.WORKSPACE_BOOTING.getValue(), OperationInfo.Status.IN_PROGRESS, loader);
 
-        loader.print(createWsOperation);
+//        loader.print(createWsOperation);
 
         workspaceClient.create(workspaceConfig, null).then(new Operation<UsersWorkspaceDto>() {
             @Override
             public void apply(UsersWorkspaceDto workspace) throws OperationException {
-                getWsOperation.setStatus(OperationInfo.Status.FINISHED);
-                createWsOperation.setStatus(OperationInfo.Status.FINISHED);
 
                 WorkspaceComponent component = wsComponentProvider.get();
 
@@ -195,8 +198,7 @@ public class CreateWorkspacePresenter implements CreateWorkspaceView.ActionDeleg
         }).catchError(new Operation<PromiseError>() {
             @Override
             public void apply(PromiseError arg) throws OperationException {
-                getWsOperation.setStatus(OperationInfo.Status.ERROR);
-                createWsOperation.setStatus(OperationInfo.Status.ERROR);
+                startWorkspaceOperation.setStatus(ERROR);
                 callback.onFailure(new Exception(arg.getCause()));
             }
         });

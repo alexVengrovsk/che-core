@@ -31,11 +31,6 @@ public class OperationInfo {
         this.status = status;
     }
 
-    public OperationInfo(String operation) {
-        this.operation = operation;
-        this.status = Status.FINISHED;
-    }
-
     public Status getStatus() {
         return status;
     }
@@ -61,10 +56,10 @@ public class OperationInfo {
 
     /** Status of a operation. */
     public enum Status {
-        IN_PROGRESS("In Progress"),
-        ERROR("Error"),
-        FINISHED("OK"),
-        EMPTY("");
+        WAITING("WAITING"),
+        IN_PROGRESS("LOADING"),
+        ERROR("ERROR"),
+        SUCCESS("SUCCESS");
 
         private final String value;
 

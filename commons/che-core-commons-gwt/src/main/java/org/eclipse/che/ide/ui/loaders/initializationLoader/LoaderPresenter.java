@@ -10,8 +10,11 @@
  *******************************************************************************/
 package org.eclipse.che.ide.ui.loaders.initializationLoader;
 
+import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+
+import java.util.List;
 
 /**
  * Loader for displaying information about the operation.
@@ -22,7 +25,8 @@ import com.google.inject.Singleton;
 public class LoaderPresenter implements OperationInfo.StatusListener, LoaderView.ActionDelegate {
 
     private final LoaderView view;
-    private       boolean    expandPanelState;
+    private List<OperationInfo> operations;
+    private boolean expandPanelState;
 
     @Inject
     public LoaderPresenter(LoaderView view) {
@@ -31,49 +35,24 @@ public class LoaderPresenter implements OperationInfo.StatusListener, LoaderView
         expandPanelState = false;
     }
 
-    /**
-     * Show loader and print operation to operation panel and details area.
-     *
-     * @param info
-     *         information about the operation.
-     */
-    public void show(OperationInfo info) {
-        view.show(info);
-        view.printToDetails(info);
+    public Widget getCustomComponent() {
+        return view.asWidget();
     }
+
+    public void showProgressLoading(LoadingInfo loadingInfo) {
+        operations = loadingInfo.getOperations();
+        view.setCurrentOperation(operations.get(0).getOperation());
+        for (OperationInfo operation : operations) {
+            view.addOperation(operation.getOperation());
+        }
+    }
+
 
     /**
      * Hide loader and clean it.
      */
     public void hide() {
-        view.print(new OperationInfo("The operations completed!", OperationInfo.Status.EMPTY));
-        view.setEnabledCloseButton(true);
-        if (!expandPanelState) {
-            view.hide();
-        }
-    }
 
-    /**
-     * Print operation to operation panel and details area.
-     *
-     * @param info
-     *         information about the operation.
-     */
-    public void print(OperationInfo info) {
-        view.print(info);
-        view.printToDetails(info);
-        view.scrollBottom();
-    }
-
-    /**
-     * Print operation only to details area.
-     *
-     * @param info
-     *         information about the operation.
-     */
-    public void printToDetails(OperationInfo info) {
-        view.printToDetails(info);
-        view.scrollBottom();
     }
 
     @Override
@@ -82,16 +61,11 @@ public class LoaderPresenter implements OperationInfo.StatusListener, LoaderView
     }
 
     @Override
-    public void onCloseClicked() {
-        view.hide();
-    }
-
-    @Override
-    public void onDetailsClicked() {
+    public void onExpanderClicked() {
         if (expandPanelState) {
-            view.collapseDetails();
+            view.collapseOperations();
         } else {
-            view.expandDetails();
+            view.expandOperations();
         }
         expandPanelState = !expandPanelState;
     }

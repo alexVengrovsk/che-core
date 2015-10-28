@@ -1086,4 +1086,14 @@ public class LightTheme implements Theme {
     public String checkBoxDisabledBackgroundColor() {
         return this.radioButtonDisabledBackgroundColor();
     }
+
+    @Override
+    public String loaderExpanderColor() {
+        return "#555555";
+    }
+
+    @Override
+    public String loaderIconBackgroundColor() {
+        return "#e9e9e9";
+    }
 }

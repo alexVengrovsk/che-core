@@ -1,0 +1,50 @@
+/*******************************************************************************
+ * Copyright (c) 2012-2015 Codenvy, S.A.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *   Codenvy, S.A. - initial API and implementation
+ *******************************************************************************/
+package org.eclipse.che.ide.actions;
+
+import com.google.gwt.user.client.ui.Widget;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
+
+import org.eclipse.che.ide.api.action.Action;
+import org.eclipse.che.ide.api.action.ActionEvent;
+import org.eclipse.che.ide.api.action.CustomComponentAction;
+import org.eclipse.che.ide.api.action.Presentation;
+import org.eclipse.che.ide.ui.loaders.initializationLoader.LoaderPresenter;
+import org.eclipse.che.ide.util.loging.Log;
+
+/**
+ * Action for display information about process of loading.
+ *
+ * @author Roman Nikitenko
+ */
+@Singleton
+public class LoaderAction extends Action implements CustomComponentAction {
+
+    private final LoaderPresenter loader;
+
+
+    @Inject
+    public LoaderAction(LoaderPresenter loader) {
+        super();
+        this.loader = loader;
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+    }
+
+    @Override
+    public Widget createCustomComponent(Presentation presentation) {
+        Log.error(getClass(), " loader action createCustomComponent");
+        return loader.getCustomComponent();
+    }
+}

@@ -174,7 +174,7 @@ public class CreateWorkspacePresenterTest {
     public void dialogShouldBeShown() {
         when(recipeServiceClient.getRecipes(anyInt(), anyInt())).thenReturn(recipesPromise);
 
-        presenter.show(operationInfo, componentCallback);
+        presenter.show(componentCallback);
 
         verify(browserQueryFieldRenderer).getWorkspaceName();
         verify(view).setWorkspaceName(anyString());
@@ -267,7 +267,7 @@ public class CreateWorkspacePresenterTest {
     public void dialogShouldBeHiddenWhenUserClicksOnCreateButton() {
         clickOnCreateButton();
 
-        verify(loader).show(operationInfo);
+//        verify(loader).show(operationInfo);
         verify(view).hide();
     }
 
@@ -277,7 +277,7 @@ public class CreateWorkspacePresenterTest {
         when(userWsPromise.catchError(Matchers.<Operation<PromiseError>>anyObject())).thenReturn(userWsPromise);
         when(recipeServiceClient.getRecipes(anyInt(), anyInt())).thenReturn(recipesPromise);
 
-        presenter.show(operationInfo, componentCallback);
+        presenter.show(componentCallback);
 
         presenter.onCreateButtonClicked();
 

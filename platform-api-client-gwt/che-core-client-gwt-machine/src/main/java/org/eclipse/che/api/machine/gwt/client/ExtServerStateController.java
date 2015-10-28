@@ -43,7 +43,6 @@ public class ExtServerStateController implements ConnectionOpenedHandler, Connec
 
     private MessageBus                messageBus;
     private LoaderPresenter           loader;
-    private OperationInfo             startExtServerOperation;
     private ExtServerState            state;
     private String                    wsUrl;
     private int                       countRetry;
@@ -70,8 +69,6 @@ public class ExtServerStateController implements ConnectionOpenedHandler, Connec
         this.state = ExtServerState.STOPPED;
 
         connect();
-        startExtServerOperation = new OperationInfo("Starting extension server", Status.IN_PROGRESS, loader);
-        loader.print(startExtServerOperation);
     }
 
     @Override
@@ -87,8 +84,7 @@ public class ExtServerStateController implements ConnectionOpenedHandler, Connec
         if (countRetry > 0) {
             retryConnectionTimer.schedule(1000);
         } else {
-            startExtServerOperation.setStatus(Status.ERROR);
-            loader.hide();
+//            loader.hide();
             state = ExtServerState.STOPPED;
             eventBus.fireEvent(ExtServerStateEvent.createExtServerStoppedEvent());
         }
@@ -97,8 +93,8 @@ public class ExtServerStateController implements ConnectionOpenedHandler, Connec
     @Override
     public void onOpen() {
         state = ExtServerState.STARTED;
-        startExtServerOperation.setStatus(Status.FINISHED);
-        loader.hide();
+//        startExtServerOperation.setStatus(Status.FINISHED);
+//        loader.hide();
 
         messageBus = messageBusProvider.createMachineMessageBus(wsUrl);
         eventBus.fireEvent(ExtServerStateEvent.createExtServerStartedEvent());

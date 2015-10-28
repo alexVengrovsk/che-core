@@ -46,7 +46,7 @@ public class StartWorkspacePresenter implements StartWorkspaceView.ActionDelegat
 
     private UsersWorkspaceDto              selectedWorkspace;
     private Callback<Component, Exception> callback;
-    private OperationInfo                  operationInfo;
+//    private OperationInfo                  operationInfo;
 
     @Inject
     public StartWorkspacePresenter(StartWorkspaceView view,
@@ -68,16 +68,14 @@ public class StartWorkspacePresenter implements StartWorkspaceView.ActionDelegat
     /**
      * Shows special dialog which contains workspaces which can be started at this time.
      *
-     * @param operationInfo
-     *         info which needs for displaying information about creating workspace
      * @param callback
      *         callback which is necessary to notify that workspace component started or failed
      * @param workspaces
      *         available workspaces which will be displayed
      */
-    public void show(List<UsersWorkspaceDto> workspaces, Callback<Component, Exception> callback, OperationInfo operationInfo) {
+    public void show(List<UsersWorkspaceDto> workspaces, Callback<Component, Exception> callback) {
         this.callback = callback;
-        this.operationInfo = operationInfo;
+//        this.operationInfo = operationInfo;
 
         view.clearWorkspacesPanel();
 
@@ -121,7 +119,7 @@ public class StartWorkspacePresenter implements StartWorkspaceView.ActionDelegat
         if (RUNNING.equals(workspace.getStatus())) {
             WorkspaceComponent workspaceComponent = wsComponentProvider.get();
 
-            workspaceComponent.setCurrentWorkspace(workspace, operationInfo);
+            workspaceComponent.setCurrentWorkspace(workspace);
 
             workspaceComponent.startWorkspaceById(workspace);
 
@@ -134,13 +132,13 @@ public class StartWorkspacePresenter implements StartWorkspaceView.ActionDelegat
     public void onCreateWorkspaceClicked() {
         view.hide();
 
-        createWorkspacePresenter.show(operationInfo, callback);
+        createWorkspacePresenter.show(callback);
     }
 
     /** {@inheritDoc} */
     @Override
     public void onStartWorkspaceClicked() {
-        loader.show(operationInfo);
+//        loader.show(operationInfo);
 
         WorkspaceComponent workspaceComponent = wsComponentProvider.get();
 

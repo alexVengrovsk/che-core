@@ -1109,4 +1109,14 @@ public class DarkTheme implements Theme {
     public String checkBoxDisabledBackgroundColor() {
         return this.getTextFieldDisabledBackgroundColor();
     }
+
+    @Override
+    public String loaderExpanderColor() {
+        return "#e3e3e3";
+    }
+
+    @Override
+    public String loaderIconBackgroundColor() {
+        return "#1e1e1e";
+    }
 }
