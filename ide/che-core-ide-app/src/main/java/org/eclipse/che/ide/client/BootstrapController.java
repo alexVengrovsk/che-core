@@ -111,6 +111,14 @@ public class BootstrapController {
                 @Override
                 public void onSuccess(Component result) {
                     Log.info(getClass(), result.getClass());
+                    if (result.getClass().toString().contains("WorkspaceComponent")) {
+                        Scheduler.get().scheduleDeferred(new ScheduledCommand() {
+                            @Override
+                            public void execute() {
+                                displayIDE();
+                            }
+                        });
+                    }
                     startComponents(componentProviderIterator);
                 }
 
@@ -133,14 +141,6 @@ public class BootstrapController {
             public void execute() {
                 // Instantiate extensions
                 extensionInitializer.startExtensions();
-
-                Scheduler.get().scheduleDeferred(new ScheduledCommand() {
-                    @Override
-                    public void execute() {
-
-                        displayIDE();
-                    }
-                });
             }
         });
     }

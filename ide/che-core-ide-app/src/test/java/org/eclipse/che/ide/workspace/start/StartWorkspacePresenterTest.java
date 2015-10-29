@@ -17,7 +17,6 @@ import org.eclipse.che.api.core.model.workspace.WorkspaceStatus;
 import org.eclipse.che.api.workspace.shared.dto.UsersWorkspaceDto;
 import org.eclipse.che.ide.bootstrap.WorkspaceComponent;
 import org.eclipse.che.ide.core.Component;
-import org.eclipse.che.ide.ui.loaders.initializationLoader.LoaderPresenter;
 import org.eclipse.che.ide.ui.loaders.initializationLoader.OperationInfo;
 import org.eclipse.che.ide.workspace.BrowserQueryFieldRenderer;
 import org.eclipse.che.ide.workspace.WorkspaceWidgetFactory;
@@ -31,6 +30,7 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import java.util.Arrays;
+import java.util.List;
 
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
@@ -54,8 +54,6 @@ public class StartWorkspacePresenterTest {
     private WorkspaceWidgetFactory       widgetFactory;
     @Mock
     private CreateWorkspacePresenter     createWorkspacePresenter;
-    @Mock
-    private LoaderPresenter              loaderPresenter;
     @Mock
     private BrowserQueryFieldRenderer    browserQueryFieldRenderer;
 
@@ -120,7 +118,7 @@ public class StartWorkspacePresenterTest {
         presenter.onCreateWorkspaceClicked();
 
         verify(view).hide();
-        verify(createWorkspacePresenter).show(callback);
+        verify(createWorkspacePresenter).show(Matchers.<List<UsersWorkspaceDto>>anyObject(), eq(callback));
     }
 
     @Test
@@ -161,8 +159,6 @@ public class StartWorkspacePresenterTest {
         reset(workspaceDto);
 
         presenter.onStartWorkspaceClicked();
-
-//        verify(loaderPresenter).show(operationInfo);
 
         verify(wsComponentProvider).get();
 

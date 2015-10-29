@@ -57,7 +57,7 @@ public class LoaderPresenter implements OperationInfo.StatusListener, LoaderView
 
     @Override
     public void onStatusChanged() {
-        view.update();
+//        view.update();
     }
 
     @Override

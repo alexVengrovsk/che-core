@@ -33,9 +33,6 @@ import org.eclipse.che.ide.CoreLocalizationConstant;
 import org.eclipse.che.ide.bootstrap.WorkspaceComponent;
 import org.eclipse.che.ide.core.Component;
 import org.eclipse.che.ide.dto.DtoFactory;
-import org.eclipse.che.ide.ui.loaders.initializationLoader.InitialLoadingInfo;
-import org.eclipse.che.ide.ui.loaders.initializationLoader.LoaderPresenter;
-import org.eclipse.che.ide.ui.loaders.initializationLoader.OperationInfo;
 import org.eclipse.che.ide.workspace.BrowserQueryFieldRenderer;
 import org.eclipse.che.ide.workspace.create.CreateWorkspaceView.HidePopupCallBack;
 
@@ -43,9 +40,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import static org.eclipse.che.ide.ui.loaders.initializationLoader.InitialLoadingInfo.Operations.WORKSPACE_BOOTING;
-import static org.eclipse.che.ide.ui.loaders.initializationLoader.OperationInfo.Status.ERROR;
 
 /**
  * The class contains business logic which allow to create user workspace if it doesn't exist.
@@ -62,13 +56,13 @@ public class CreateWorkspacePresenter implements CreateWorkspaceView.ActionDeleg
             "._-]|%[0-9A-F]{2})*)?";
     private static final RegExp URL         = RegExp.compile(URL_PATTERN);
 
-    static final String RECIPE_TYPE = "docker";
-    static final int    SKIP_COUNT  = 0;
-    static final int    MAX_COUNT   = 100;
+    static final String RECIPE_TYPE     = "docker";
+    static final int    SKIP_COUNT      = 0;
+    static final int    MAX_COUNT       = 100;
+    static final int    MAX_NAME_LENGTH = 20;
+    static final int    MIN_NAME_LENGTH = 3;
 
-    private final CreateWorkspaceView view;
-    private final InitialLoadingInfo initialLoadingInfo;
-    private final LoaderPresenter              loader;
+    private final CreateWorkspaceView          view;
     private final DtoFactory                   dtoFactory;
     private final WorkspaceServiceClient       workspaceClient;
     private final CoreLocalizationConstant     locale;
@@ -78,29 +72,27 @@ public class CreateWorkspacePresenter implements CreateWorkspaceView.ActionDeleg
 
     private Callback<Component, Exception> callback;
     private List<RecipeDescriptor>         recipes;
-    private OperationInfo                  startWorkspaceOperation;
+    private List<String>                   workspacesNames;
 
     @Inject
     public CreateWorkspacePresenter(CreateWorkspaceView view,
-                                    LoaderPresenter loader,
                                     DtoFactory dtoFactory,
                                     WorkspaceServiceClient workspaceClient,
                                     CoreLocalizationConstant locale,
                                     Provider<WorkspaceComponent> wsComponentProvider,
                                     RecipeServiceClient recipeService,
-                                    BrowserQueryFieldRenderer browserQueryFieldRenderer,
-                                    InitialLoadingInfo initialLoadingInfo) {
+                                    BrowserQueryFieldRenderer browserQueryFieldRenderer) {
         this.view = view;
-        this.initialLoadingInfo = initialLoadingInfo;
         this.view.setDelegate(this);
 
-        this.loader = loader;
         this.dtoFactory = dtoFactory;
         this.workspaceClient = workspaceClient;
         this.locale = locale;
         this.wsComponentProvider = wsComponentProvider;
         this.recipeService = recipeService;
         this.browserQueryFieldRenderer = browserQueryFieldRenderer;
+
+        this.workspacesNames = new ArrayList<>();
     }
 
     /**
@@ -108,11 +100,17 @@ public class CreateWorkspacePresenter implements CreateWorkspaceView.ActionDeleg
      *
      * @param callback
      *         callback which is necessary to notify that workspace component started or failed
+     * @param workspaces
+     *         list of existing workspaces
      */
-    public void show(final Callback<Component, Exception> callback) {
+    public void show(List<UsersWorkspaceDto> workspaces, final Callback<Component, Exception> callback) {
         this.callback = callback;
-        this.startWorkspaceOperation = initialLoadingInfo.getOperation(WORKSPACE_BOOTING);
 
+        workspacesNames.clear();
+
+        for (UsersWorkspaceDto workspace : workspaces) {
+            workspacesNames.add(workspace.getName());
+        }
 
         Promise<List<RecipeDescriptor>> recipes = recipeService.getRecipes(SKIP_COUNT, MAX_COUNT);
 
@@ -123,26 +121,61 @@ public class CreateWorkspacePresenter implements CreateWorkspaceView.ActionDeleg
             }
         });
 
-        view.setWorkspaceName(browserQueryFieldRenderer.getWorkspaceName());
+        String workspaceName = browserQueryFieldRenderer.getWorkspaceName();
+
+        view.setWorkspaceName(workspaceName);
+
+        validateCreateWorkspaceForm();
 
         view.show();
     }
 
+    private void validateCreateWorkspaceForm() {
+        String workspaceName = view.getWorkspaceName();
+
+        int nameLength = workspaceName.length();
+
+        String errorDescription = "";
+
+        boolean nameLengthIsInCorrect = nameLength < MIN_NAME_LENGTH || nameLength > MAX_NAME_LENGTH;
+
+        if (nameLengthIsInCorrect) {
+            errorDescription = locale.createWsNameLengthIsNotCorrect();
+        }
+
+        boolean nameIsInCorrect = !FILE_NAME.test(workspaceName);
+
+        if (nameIsInCorrect) {
+            errorDescription = locale.createWsNameIsNotCorrect();
+        }
+
+        boolean nameAlreadyExist = workspacesNames.contains(workspaceName);
+
+        if (nameAlreadyExist) {
+            errorDescription = locale.createWsNameAlreadyExist();
+        }
+
+        view.showValidationNameError(errorDescription);
+
+        String recipeUrl = view.getRecipeUrl();
+
+        boolean urlIsIncorrect = !URL.test(recipeUrl);
+
+        view.setVisibleUrlError(urlIsIncorrect);
+
+        view.setEnableCreateButton(!urlIsIncorrect && errorDescription.isEmpty());
+    }
+
     /** {@inheritDoc} */
     @Override
-    public void onNameChanged(String name) {
-        view.setVisibleNameError(!FILE_NAME.test(name));
+    public void onNameChanged() {
+        validateCreateWorkspaceForm();
     }
 
     /** {@inheritDoc} */
     @Override
     public void onRecipeUrlChanged() {
-        String recipeURL = view.getRecipeUrl();
-        boolean urlValid = URL.test(recipeURL);
-
-        view.setVisibleUrlError(!urlValid);
-
-        view.setEnableCreateButton(urlValid);
+        validateCreateWorkspaceForm();
     }
 
     /** {@inheritDoc} */
@@ -173,8 +206,6 @@ public class CreateWorkspacePresenter implements CreateWorkspaceView.ActionDeleg
     /** {@inheritDoc} */
     @Override
     public void onCreateButtonClicked() {
-        loader.showProgressLoading(initialLoadingInfo);
-
         view.hide();
 
         createWorkspace();
@@ -183,14 +214,9 @@ public class CreateWorkspacePresenter implements CreateWorkspaceView.ActionDeleg
     private void createWorkspace() {
         WorkspaceConfigDto workspaceConfig = getWorkspaceConfig();
 
-//        final OperationInfo createWsOperation = new OperationInfo(InitialLoadingInfo.Operations.WORKSPACE_BOOTING.getValue(), OperationInfo.Status.IN_PROGRESS, loader);
-
-//        loader.print(createWsOperation);
-
         workspaceClient.create(workspaceConfig, null).then(new Operation<UsersWorkspaceDto>() {
             @Override
             public void apply(UsersWorkspaceDto workspace) throws OperationException {
-
                 WorkspaceComponent component = wsComponentProvider.get();
 
                 component.startWorkspaceById(workspace);
@@ -198,7 +224,6 @@ public class CreateWorkspacePresenter implements CreateWorkspaceView.ActionDeleg
         }).catchError(new Operation<PromiseError>() {
             @Override
             public void apply(PromiseError arg) throws OperationException {
-                startWorkspaceOperation.setStatus(ERROR);
                 callback.onFailure(new Exception(arg.getCause()));
             }
         });

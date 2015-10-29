@@ -153,9 +153,6 @@ public class WorkspaceComponent implements Component, ExtServerStateHandler {
     public void start(final Callback<Component, Exception> callback) {
         this.callback = callback;
 
-        startWorkspaceOperation = initialLoadingInfo.getOperation(WORKSPACE_BOOTING);
-        startWorkspaceOperation.setStatus(IN_PROGRESS);
-
         workspaceServiceClient.getWorkspaces(SKIP_COUNT, MAX_COUNT).then(new Operation<List<UsersWorkspaceDto>>() {
             @Override
             public void apply(List<UsersWorkspaceDto> workspaces) throws OperationException {
@@ -180,20 +177,23 @@ public class WorkspaceComponent implements Component, ExtServerStateHandler {
 
                     if (isWorkspaceExist) {
                         startWorkspaceById(workspace);
+
                         return;
                     }
                 }
 
-                createWorkspacePresenter.show(callback);
+                createWorkspacePresenter.show(workspaces, callback);
             }
         }).catchError(new Operation<PromiseError>() {
             @Override
-            public void apply(PromiseError arg) throws OperationException {
+            public void apply(PromiseError error) throws OperationException {
                 needToReloadComponents = true;
 
-                startMachineOperation.setStatus(ERROR);
+                dialogFactory.createMessageDialog(locale.getWsErrorDialogTitle(),
+                                                  locale.getWsErrorDialogContent(error.getMessage()),
+                                                  null).show();
 
-                callback.onFailure(new Exception(arg.getCause()));
+                callback.onFailure(new Exception(error.getCause()));
             }
         });
     }
@@ -220,17 +220,22 @@ public class WorkspaceComponent implements Component, ExtServerStateHandler {
 
                         if (RUNNING.equals(wsFromReferenceStatus)) {
                             setCurrentWorkspace(workspace);
-
-                            startWorkspaceById(workspace);
-
-                            return;
                         }
+
                         startWorkspaceById(workspace);
                     }
                 };
 
-                workspaceServiceClient.getWorkspaceById(recentWorkspaceId).then(workspaceOperation);
+                Operation<PromiseError> errorOperation = new Operation<PromiseError>() {
+                    @Override
+                    public void apply(PromiseError promiseError) throws OperationException {
+                        showWorkspaceDialog();
+                    }
+                };
 
+                workspaceServiceClient.getWorkspaceById(recentWorkspaceId)
+                                      .then(workspaceOperation)
+                                      .catchError(errorOperation);
                 return;
             }
         }
@@ -243,7 +248,7 @@ public class WorkspaceComponent implements Component, ExtServerStateHandler {
             @Override
             public void apply(List<UsersWorkspaceDto> workspaces) throws OperationException {
                 if (workspaces.isEmpty()) {
-                    createWorkspacePresenter.show(callback);
+                    createWorkspacePresenter.show(workspaces, callback);
 
                     return;
                 }
@@ -260,7 +265,6 @@ public class WorkspaceComponent implements Component, ExtServerStateHandler {
      *         workspace which will be current
      */
     public void setCurrentWorkspace(UsersWorkspaceDto workspace) {
-        startWorkspaceOperation.setStatus(SUCCESS);
         Config.setCurrentWorkspace(workspace);
         appContext.setWorkspace(workspace);
 
@@ -280,6 +284,10 @@ public class WorkspaceComponent implements Component, ExtServerStateHandler {
      *         workspace which will be started
      */
     public void startWorkspaceById(final UsersWorkspaceDto workspace) {
+        loader.showProgressLoading(initialLoadingInfo);
+        startWorkspaceOperation = initialLoadingInfo.getOperation(WORKSPACE_BOOTING);
+        startWorkspaceOperation.setStatus(IN_PROGRESS);
+
         messageBus = messageBusProvider.createMessageBus(workspace.getId());
 
         messageBus.addOnOpenHandler(new ConnectionOpenedHandler() {
@@ -297,6 +305,8 @@ public class WorkspaceComponent implements Component, ExtServerStateHandler {
 
                             for (MachineStateDto machineState : machineStates) {
                                 if (machineState.isDev()) {
+                                    startMachineOperation = initialLoadingInfo.getOperation(MACHINE_BOOTING);
+                                    startMachineOperation.setStatus(IN_PROGRESS);
                                     subscribeToMachineStatus(machineState.getChannels().getStatus());
                                 }
                             }
@@ -369,7 +379,7 @@ public class WorkspaceComponent implements Component, ExtServerStateHandler {
             @Override
             public void apply(final List<UsersWorkspaceDto> workspaces) throws OperationException {
                 dialogFactory.createMessageDialog(locale.startWsErrorTitle(),
-                                                  locale.startWsErrorContent(wsName) + ": " + errorMessage,
+                                                  locale.startWsErrorContent(wsName, errorMessage),
                                                   new ConfirmCallback() {
                                                       @Override
                                                       public void accepted() {
@@ -407,9 +417,7 @@ public class WorkspaceComponent implements Component, ExtServerStateHandler {
 
                 @Override
                 protected void onErrorReceived(Throwable exception) {
-                    if (startMachineOperation != null) {
-                        startMachineOperation.setStatus(ERROR);
-                    }
+                    notificationManager.showError(exception.getMessage());
                 }
             });
         } catch (WebSocketException exception) {
@@ -419,14 +427,14 @@ public class WorkspaceComponent implements Component, ExtServerStateHandler {
 
     private void onMachineStatusChanged(MachineStatusEvent event) {
         switch (event.getEventType()) {
-            case CREATING:
+            case RUNNING:
                 startMachineOperation = initialLoadingInfo.getOperation(MACHINE_BOOTING);
                 startMachineOperation.setStatus(IN_PROGRESS);
-                break;
-            case RUNNING:
                 if (startMachineOperation != null) {
                     startMachineOperation.setStatus(SUCCESS);
                 }
+
+                startWorkspaceOperation.setStatus(SUCCESS);
 
                 eventBus.fireEvent(new DevMachineStateEvent(event));
                 break;
@@ -434,6 +442,8 @@ public class WorkspaceComponent implements Component, ExtServerStateHandler {
                 if (startMachineOperation != null) {
                     startMachineOperation.setStatus(ERROR);
                 }
+
+                startWorkspaceOperation.setStatus(ERROR);
                 break;
             default:
         }

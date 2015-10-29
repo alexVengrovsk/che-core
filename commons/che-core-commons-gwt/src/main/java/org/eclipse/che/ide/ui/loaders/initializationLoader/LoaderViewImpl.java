@@ -12,6 +12,8 @@ package org.eclipse.che.ide.ui.loaders.initializationLoader;
 
 import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Document;
+import com.google.gwt.event.dom.client.BlurEvent;
+import com.google.gwt.event.dom.client.BlurHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -91,6 +93,12 @@ public class LoaderViewImpl implements LoaderView {
             }
         }, ClickEvent.getType());
         operations.setVisible(false);
+        operationPanel.addDomHandler(new BlurHandler() {
+            @Override
+            public void onBlur(BlurEvent event) {
+                operationPanel.setVisible(false);
+            }
+        }, BlurEvent.getType());
 
     }
 

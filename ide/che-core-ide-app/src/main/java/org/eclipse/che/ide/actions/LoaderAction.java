@@ -19,7 +19,6 @@ import org.eclipse.che.ide.api.action.ActionEvent;
 import org.eclipse.che.ide.api.action.CustomComponentAction;
 import org.eclipse.che.ide.api.action.Presentation;
 import org.eclipse.che.ide.ui.loaders.initializationLoader.LoaderPresenter;
-import org.eclipse.che.ide.util.loging.Log;
 
 /**
  * Action for display information about process of loading.
@@ -44,7 +43,6 @@ public class LoaderAction extends Action implements CustomComponentAction {
 
     @Override
     public Widget createCustomComponent(Presentation presentation) {
-        Log.error(getClass(), " loader action createCustomComponent");
         return loader.getCustomComponent();
     }
 }
