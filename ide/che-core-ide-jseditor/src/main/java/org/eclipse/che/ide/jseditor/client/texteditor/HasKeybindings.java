@@ -12,14 +12,18 @@ package org.eclipse.che.ide.jseditor.client.texteditor;
 
 import org.eclipse.che.ide.jseditor.client.keymap.Keybinding;
 
+import java.util.List;
+
 /**
  * Interface for components that handles key bindings.
  */
-public interface HasKeybindings {
+public interface HasKeybindings {//todo
 
     /**
      * Adds a key bindings.
      * @param keybinding the new binding
      */
     void addKeybinding(Keybinding keybinding);
+
+    List<Keybinding> getbindings();
 }

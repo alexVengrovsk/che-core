@@ -41,7 +41,7 @@ public interface JsEditorConstants extends Messages {
     String infoPaneEditorLabel();
 
     @DefaultMessage("Key Bindings: ")
-    String infoPaneKeybindingLabel();
+    String infoPaneKeybindingLabel();//todo
 
     @DefaultMessage("Unknown")
     String infoPanelUnknownEditorType();

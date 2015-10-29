@@ -96,6 +96,7 @@ public class Keymap {
      * @return a new keymap instance
      */
     public static Keymap newKeymap(final String key, final String displayString, final EditorType editorType) {
+        Log.info(Keymap.class, "%%%%%%key " + key);
         if (key == null) {
             throw new IllegalArgumentException("Keymap key can't be null");
         }

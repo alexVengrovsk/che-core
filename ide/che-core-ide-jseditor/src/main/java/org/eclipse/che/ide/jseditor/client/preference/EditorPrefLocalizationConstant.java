@@ -26,5 +26,5 @@ public interface EditorPrefLocalizationConstant extends Messages {
     String editorTypeCategory();
 
     @DefaultMessage("Key Bindings")
-    String keybindingsSectionLabel();
+    String keybindingsSectionLabel();//todo syntax error
 }

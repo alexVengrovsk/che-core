@@ -607,4 +607,25 @@ public interface CoreLocalizationConstant extends Messages {
 
     @Key("get.ws.error.dialog.content")
     String getWsErrorDialogContent(String reason);
+
+    @Key("key.map.reference.action.text")
+    String keyMapReferenceActonText();//todo syntax error
+
+    @Key("key.map.reference.action.description")
+    String keyMapReferenceActonDescription();
+
+    @Key("key.mode.title")
+    String keModeTitle();
+
+    @Key("switch.left.editor.name")
+    String switchLeftEditorName();
+
+    @Key("switch.left.editor.description")
+    String switchLeftEditorDescription();
+
+    @Key("switch.right.editor.name")
+    String switchRightEditorName();
+
+    @Key("switch.right.editor.description")
+    String switchRightEditorDescription();
 }

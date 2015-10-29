@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.che.ide.jseditor.client.keymap.Keybinding;
+import org.eclipse.che.ide.util.loging.Log;
 
 /** Hold {@link org.eclipse.che.ide.jseditor.client.keymap.Keybinding} until the editor is ready to accept them. */
 public class TemporaryKeybindingsManager implements HasKeybindings {
@@ -26,6 +27,10 @@ public class TemporaryKeybindingsManager implements HasKeybindings {
     }
 
     public List<Keybinding> getbindings() {
+        Log.info(getClass(), "test");
+        for (Keybinding keybinding: bindings) {
+            Log.info(getClass(), keybinding.getAction());
+        }
         return this.bindings;
     }
 }

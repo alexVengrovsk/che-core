@@ -16,6 +16,8 @@ import org.eclipse.che.ide.api.notification.NotificationManager;
 import org.eclipse.che.ide.jseditor.client.editorconfig.TextEditorConfiguration;
 import org.eclipse.che.ide.jseditor.client.keymap.Keybinding;
 
+import java.util.List;
+
 public interface ConfigurableTextEditor extends TextEditor {
 
     /**
@@ -42,4 +44,6 @@ public interface ConfigurableTextEditor extends TextEditor {
      * @param keybinding the key binding
      */
     void addKeybinding(Keybinding keybinding);
+
+    List<Keybinding> getKeybinding();
 }

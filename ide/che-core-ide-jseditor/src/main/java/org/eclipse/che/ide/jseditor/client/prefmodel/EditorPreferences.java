@@ -15,7 +15,7 @@ import com.google.gwt.core.client.JavaScriptObject;
 import elemental.js.util.JsMapFromStringToString;
 
 /** Data object for the editor preferences. */
-public class EditorPreferences extends JavaScriptObject {
+public class EditorPreferences extends JavaScriptObject {//todo
 
 	/** JSO required protected constructor. */
     protected EditorPreferences() {}

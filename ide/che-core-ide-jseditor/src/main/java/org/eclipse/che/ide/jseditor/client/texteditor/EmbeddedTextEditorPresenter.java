@@ -77,6 +77,7 @@ import org.eclipse.che.ide.texteditor.selection.CursorModelWithHandler;
 import org.eclipse.che.ide.ui.dialogs.CancelCallback;
 import org.eclipse.che.ide.ui.dialogs.ConfirmCallback;
 import org.eclipse.che.ide.ui.dialogs.DialogFactory;
+import org.eclipse.che.ide.util.loging.Log;
 import org.vectomatic.dom.svg.ui.SVGResource;
 
 import javax.inject.Inject;
@@ -683,6 +684,13 @@ public class EmbeddedTextEditorPresenter<T extends EditorWidget> extends Abstrac
             this.keyBindingsManager.addKeybinding(binding);
         }
     }
+
+    @Override
+    public List<Keybinding> getKeybinding() {
+        Log.info(getClass(), "To be or not to be " + (editorWidget == null));
+        return editorWidget.getbindings();
+    }
+
 
     @Override
     public void onResize() {
