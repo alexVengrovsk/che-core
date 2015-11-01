@@ -13,6 +13,8 @@ package org.eclipse.che.ide.ui.loaders.initializationLoader;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
+import org.eclipse.che.ide.util.input.SignalKeyLogic;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -41,6 +43,10 @@ public class InitialLoadingInfo implements LoadingInfo {
             }
         }
         return null;
+    }
+
+    public void setOperationStatus(Operations operation) {
+
     }
 
     @Override

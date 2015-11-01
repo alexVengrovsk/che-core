@@ -12,19 +12,20 @@ package org.eclipse.che.ide.ui.loaders.initializationLoader;
 
 import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Document;
-import com.google.gwt.event.dom.client.BlurEvent;
-import com.google.gwt.event.dom.client.BlurHandler;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.MouseDownEvent;
+import com.google.gwt.event.dom.client.MouseDownHandler;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SimpleHtmlSanitizer;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.UIObject;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.ListDataProvider;
 import com.google.inject.Inject;
@@ -67,11 +68,16 @@ public class LoaderViewImpl implements LoaderView {
     @Inject
     public LoaderViewImpl(LoaderViewImplUiBinder uiBinder,
                           LoaderResources resources) {
-        Log.error(getClass(), "loader view constructor");
         this.resources = resources;
         resources.Css().ensureInjected();
         rootElement = uiBinder.createAndBindUi(this);
 
+
+        DivElement progressBar = Document.get().createDivElement();
+        progressBar.setClassName(resources.Css().progressBar());
+        progressBar.getStyle().setProperty("width", "50%");
+        UIObject.ensureDebugId(progressBar, "progressBar");
+        operationPanel.getElement().appendChild(progressBar);
 
         status.setText("LOADING:");
         iconPanel.getElement().appendChild((resources.loaderIcon().getSvg().getElement()));
@@ -79,31 +85,39 @@ public class LoaderViewImpl implements LoaderView {
         expander.appendChild(resources.expansionIcon().getSvg().getElement());
         expandHolder.getElement().appendChild(expander);
 
-        expandHolder.sinkEvents(Event.ONCLICK);
-        expandHolder.addDomHandler(new ClickHandler() {
-            @Override
-            public void onClick(ClickEvent event) {
-                delegate.onExpanderClicked();
-            }
-        }, ClickEvent.getType());
         operationPanel.addDomHandler(new ClickHandler() {
             @Override
             public void onClick(ClickEvent event) {
+                Log.error(getClass(), "" + getActive().getAttribute("id"));
+
                 delegate.onExpanderClicked();
             }
         }, ClickEvent.getType());
         operations.setVisible(false);
-        operationPanel.addDomHandler(new BlurHandler() {
+
+        operationPanel.addDomHandler(new MouseDownHandler() {
             @Override
-            public void onBlur(BlurEvent event) {
-                operationPanel.setVisible(false);
+            public void onMouseDown(MouseDownEvent event) {
+
+                Log.error(getClass(), "onMouseDown");
+                //Update isActive state. It actually when we lose onBlur event in the parent widget.
+                boolean isActive = isActive(operationPanel.getElement());
+                if (isActive) {
+                    Log.error(getClass(), "isActive");
+
+                } else {
+                    Log.error(getClass(), " NOT Active");
+                }
             }
-        }, BlurEvent.getType());
+        }, MouseDownEvent.getType());
 
     }
 
+    private native Element getActive() /*-{
+        return $doc.activeElement;
+    }-*/;
 
-    /** Return sanitized message (with all restricted HTML-tags escaped) in {@link SafeHtml}. */
+        /** Return sanitized message (with all restricted HTML-tags escaped) in {@link SafeHtml}. */
     private SafeHtml buildSafeHtmlMessage(String message) {
         return new SafeHtmlBuilder()
                 .appendHtmlConstant("<pre " + PRE_STYLE + ">")
@@ -120,7 +134,7 @@ public class LoaderViewImpl implements LoaderView {
 
     @Override
     public void setCurrentOperation(String operation) {
-        currentOperation.clear();
+//        currentOperation.clear();
         currentOperation.add(new HTML(operation));
     }
 
@@ -160,6 +174,14 @@ public class LoaderViewImpl implements LoaderView {
         operations.getElement().getStyle().setPropertyPx("top", top + 27);
         operations.getElement().getStyle().setPropertyPx("left", left);
     }
+
+    /**
+     * Check isActive status.
+     */
+    private native boolean isActive(Element element) /*-{
+        var activeElement = $doc.activeElement;
+        return activeElement.isEqualNode(element);
+    }-*/;
 
     interface LoaderViewImplUiBinder extends UiBinder<FlowPanel, LoaderViewImpl> {
     }

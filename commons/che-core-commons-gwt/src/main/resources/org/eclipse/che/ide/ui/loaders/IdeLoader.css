@@ -71,6 +71,14 @@
     color: #61b7ef;
     text-align: center;
 }
+.progressBar {
+    height: 3px;
+    display: block;
+    position: relative;
+    background-color: #4EABFF;
+    left: 0;
+    top: 19px;
+}
 
 @-webkit-keyframes barrelRoll {
     0% {

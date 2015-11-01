@@ -31,6 +31,7 @@ public interface LoaderResources extends ClientBundle {
         String errorStatus();
         String successStatus();
         String inProgressStatus();
+        String progressBar();
     }
 
     @MimeType("image/png")

@@ -33,6 +33,12 @@
             margin: 0 !important;
         }
 
+        .rightPanel {
+            height: 100%;
+            display: inline-block;
+            margin: 0 !important;
+        }
+
         .iconPanel {
             float: left;
             width: 40px;
@@ -99,6 +105,7 @@
             height: inherit;
             background-color: inherit;
             border: none;
+            line-height: 22px;
         }
 
         .operationPanel {
@@ -116,10 +123,12 @@
         <g:FlowPanel addStyleNames="{style.statusPanel}">
             <g:Label ui:field="status" addStyleNames="{style.statusLabel}"/>
         </g:FlowPanel>
-        <g:FlowPanel ui:field="operationPanel" addStyleNames="{style.operationPanel}">
-            <g:FlowPanel ui:field="currentOperation" addStyleNames="{style.currentOperation}"/>
-            <g:FlowPanel ui:field="operations" addStyleNames="{style.operations}"/>
+        <g:FlowPanel ui:field="operationPanel" addStyleNames="{style.rightPanel}">
+            <g:FlowPanel addStyleNames="{style.operationPanel}" debugId="loaderView-operationPanel">
+                <g:FlowPanel ui:field="currentOperation" addStyleNames="{style.currentOperation}" debugId="loaderView-currentOperation"/>
+                <g:FlowPanel ui:field="operations" addStyleNames="{style.operations}" debugId="loaderView-operations"/>
+            </g:FlowPanel>
+            <g:FlowPanel ui:field="expandHolder" addStyleNames="{style.expandedImage}" debugId="loaderView-expandedImage"/>
         </g:FlowPanel>
-        <g:FlowPanel ui:field="expandHolder" addStyleNames="{style.expandedImage}"/>
     </g:FlowPanel>
 </ui:UiBinder>

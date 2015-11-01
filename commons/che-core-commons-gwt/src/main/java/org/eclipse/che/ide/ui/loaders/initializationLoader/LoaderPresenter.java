@@ -63,7 +63,7 @@ public class LoaderPresenter implements OperationInfo.StatusListener, LoaderView
     @Override
     public void onExpanderClicked() {
         if (expandPanelState) {
-            view.collapseOperations();
+//            view.collapseOperations();
         } else {
             view.expandOperations();
         }
