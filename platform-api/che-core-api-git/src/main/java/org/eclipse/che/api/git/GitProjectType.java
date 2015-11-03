@@ -22,11 +22,14 @@ import javax.inject.Singleton;
 public class GitProjectType extends TransientMixin {
 
     public static String VCS_PROVIDER_NAME = "vcs.provider.name";
+    public static String VCS_BRANCH_NAME = "vcs.branch.name";
 
     @Inject
     public GitProjectType(GitValueProviderFactory gitRepositoryValueProviderFactory) {
         super("git", "git");
         addVariableDefinition(VCS_PROVIDER_NAME, "Is this git repo or not?", false,
+                              gitRepositoryValueProviderFactory);
+        addVariableDefinition(VCS_BRANCH_NAME, "Git branch name", false,
                               gitRepositoryValueProviderFactory);
     }
 }

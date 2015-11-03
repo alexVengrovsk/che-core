@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.che.ide.project.node;
 
+import com.google.gwt.user.client.Window;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 import com.google.web.bindery.event.shared.EventBus;
@@ -63,6 +64,10 @@ public class ProjectDescriptorNode extends ResourceBasedNode<ProjectDescriptor> 
         presentation.setPresentableText(getData().getName());
         presentation.setPresentableIcon(isValid(getData()) ? nodeManager.getNodesResources().projectFolder()
                                                            : nodeManager.getNodesResources().notValidProjectFolder());
+
+        if (getData().getAttributes().containsKey("vcs.branch.name")) {
+            presentation.setInfoText(getData().getAttributes().get("vcs.branch.name").get(0));
+        }
     }
 
     private boolean isValid(ProjectDescriptor descriptor) {

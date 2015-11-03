@@ -28,7 +28,7 @@ import org.eclipse.che.vfs.impl.fs.LocalPathResolver;
 import org.eclipse.che.vfs.impl.fs.VirtualFileImpl;
 
 import javax.inject.Singleton;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static org.eclipse.che.api.git.shared.StatusFormat.LONG;
@@ -54,10 +54,15 @@ public class GitValueProviderFactory implements ValueProviderFactory {
             public List<String> getValues(String attributeName) throws ValueStorageException {
                 try (GitConnection gitConnection =
                              gitConnectionFactory.getConnection(resolveLocalPathByPath(folder.getPath(), folder.getWorkspace()))) {
-
-                    //check whether the project git repository by performing git status(throw Exception if the project is not git repository)
-                    gitConnection.status(LONG);
-                    return Arrays.asList("git");
+                    String value = "";
+                    if (attributeName.equals(GitProjectType.VCS_PROVIDER_NAME )) {
+                        //check whether the project git repository by performing git status(throw Exception if the project is not git repository)
+                        gitConnection.status(LONG);
+                        value = "git";
+                    } if (attributeName.equals(GitProjectType.VCS_BRANCH_NAME )) {
+                        value = gitConnection.status(LONG).getBranchName();
+                    }
+                    return Collections.singletonList(value);
                 } catch (ApiException e) {
                     throw new ValueStorageException(e.getMessage());
                 }
