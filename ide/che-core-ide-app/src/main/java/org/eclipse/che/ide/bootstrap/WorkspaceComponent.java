@@ -41,7 +41,6 @@ import org.eclipse.che.ide.ui.dialogs.ConfirmCallback;
 import org.eclipse.che.ide.ui.dialogs.DialogFactory;
 import org.eclipse.che.ide.ui.loaders.initializationLoader.InitialLoadingInfo;
 import org.eclipse.che.ide.ui.loaders.initializationLoader.LoaderPresenter;
-import org.eclipse.che.ide.ui.loaders.initializationLoader.OperationInfo;
 import org.eclipse.che.ide.util.Config;
 import org.eclipse.che.ide.util.loging.Log;
 import org.eclipse.che.ide.websocket.MessageBus;
@@ -96,8 +95,6 @@ public class WorkspaceComponent implements Component, ExtServerStateHandler {
     private Callback<Component, Exception> callback;
     private MessageBus                     messageBus;
     private boolean                        needToReloadComponents;
-    private OperationInfo                  startWorkspaceOperation;
-    private OperationInfo                  startMachineOperation;
 
     @Inject
     public WorkspaceComponent(WorkspaceServiceClient workspaceServiceClient,
@@ -284,9 +281,8 @@ public class WorkspaceComponent implements Component, ExtServerStateHandler {
      *         workspace which will be started
      */
     public void startWorkspaceById(final UsersWorkspaceDto workspace) {
-        loader.showProgressLoading(initialLoadingInfo);
-        startWorkspaceOperation = initialLoadingInfo.getOperation(WORKSPACE_BOOTING);
-        startWorkspaceOperation.setStatus(IN_PROGRESS);
+        loader.show(initialLoadingInfo);
+        initialLoadingInfo.setOperationStatus(WORKSPACE_BOOTING.getValue(), IN_PROGRESS);
 
         messageBus = messageBusProvider.createMessageBus(workspace.getId());
 
@@ -305,8 +301,7 @@ public class WorkspaceComponent implements Component, ExtServerStateHandler {
 
                             for (MachineStateDto machineState : machineStates) {
                                 if (machineState.isDev()) {
-                                    startMachineOperation = initialLoadingInfo.getOperation(MACHINE_BOOTING);
-                                    startMachineOperation.setStatus(IN_PROGRESS);
+                                    initialLoadingInfo.setOperationStatus(MACHINE_BOOTING.getValue(), IN_PROGRESS);
                                     subscribeToMachineStatus(machineState.getChannels().getStatus());
                                 }
                             }
@@ -314,7 +309,7 @@ public class WorkspaceComponent implements Component, ExtServerStateHandler {
                     }).catchError(new Operation<PromiseError>() {
                         @Override
                         public void apply(PromiseError arg) throws OperationException {
-                            startWorkspaceOperation.setStatus(ERROR);
+                            initialLoadingInfo.setOperationStatus(WORKSPACE_BOOTING.getValue(), ERROR);
                             callback.onFailure(new Exception(arg.getCause()));
                         }
                     });
@@ -345,7 +340,7 @@ public class WorkspaceComponent implements Component, ExtServerStateHandler {
                     if (EventType.ERROR.equals(workspaceStatus)) {
                         notificationManager.showError(locale.workspaceStartFailed(workspaceName));
 
-                        startWorkspaceOperation.setStatus(ERROR);
+                        initialLoadingInfo.setOperationStatus(WORKSPACE_BOOTING.getValue(), ERROR);
 
                         showErrorDialog(workspaceName, statusEvent.getError());
                     }
@@ -387,7 +382,6 @@ public class WorkspaceComponent implements Component, ExtServerStateHandler {
                                                       }
                                                   }).show();
 
-                loader.hide();
             }
         });
 
@@ -428,22 +422,14 @@ public class WorkspaceComponent implements Component, ExtServerStateHandler {
     private void onMachineStatusChanged(MachineStatusEvent event) {
         switch (event.getEventType()) {
             case RUNNING:
-                startMachineOperation = initialLoadingInfo.getOperation(MACHINE_BOOTING);
-                startMachineOperation.setStatus(IN_PROGRESS);
-                if (startMachineOperation != null) {
-                    startMachineOperation.setStatus(SUCCESS);
-                }
-
-                startWorkspaceOperation.setStatus(SUCCESS);
+                initialLoadingInfo.setOperationStatus(WORKSPACE_BOOTING.getValue(), SUCCESS);
+                initialLoadingInfo.setOperationStatus(MACHINE_BOOTING.getValue(), SUCCESS);
 
                 eventBus.fireEvent(new DevMachineStateEvent(event));
                 break;
             case ERROR:
-                if (startMachineOperation != null) {
-                    startMachineOperation.setStatus(ERROR);
-                }
-
-                startWorkspaceOperation.setStatus(ERROR);
+                initialLoadingInfo.setOperationStatus(WORKSPACE_BOOTING.getValue(), ERROR);
+                initialLoadingInfo.setOperationStatus(MACHINE_BOOTING.getValue(), ERROR);
                 break;
             default:
         }

@@ -1121,4 +1121,9 @@ public class LightTheme implements Theme {
     public String loaderIconBackgroundColor() {
         return "#e9e9e9";
     }
+
+    @Override
+    public String loaderProgressStatusColor() {
+        return "#4EABFF";
+    }
 }

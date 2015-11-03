@@ -12,28 +12,20 @@ package org.eclipse.che.ide.ui.loaders.initializationLoader;
 
 import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Document;
-import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.dom.client.MouseDownEvent;
-import com.google.gwt.event.dom.client.MouseDownHandler;
-import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
-import com.google.gwt.safehtml.shared.SimpleHtmlSanitizer;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.UIObject;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.gwt.view.client.ListDataProvider;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 import org.eclipse.che.ide.ui.loaders.LoaderResources;
-import org.eclipse.che.ide.util.loging.Log;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -44,7 +36,7 @@ import java.util.List;
 @Singleton
 public class LoaderViewImpl implements LoaderView {
 
-    private static final String PRE_STYLE = "style='margin:0px;'";
+    private static final String LOADING = "LOADING:";
 
     @UiField
     FlowPanel iconPanel;
@@ -59,11 +51,12 @@ public class LoaderViewImpl implements LoaderView {
     @UiField
     Label     status;
 
-    private FlowPanel                       rootElement;
-    private ListDataProvider<OperationInfo> dataProvider;
-    private List<OperationInfo>             operationData;
-    private LoaderResources                 resources;
-    private ActionDelegate                  delegate;
+    DivElement progressBar;
+    List<HTML> components;
+
+    private FlowPanel       rootElement;
+    private LoaderResources resources;
+    private ActionDelegate  delegate;
 
     @Inject
     public LoaderViewImpl(LoaderViewImplUiBinder uiBinder,
@@ -72,80 +65,69 @@ public class LoaderViewImpl implements LoaderView {
         resources.Css().ensureInjected();
         rootElement = uiBinder.createAndBindUi(this);
 
-
-        DivElement progressBar = Document.get().createDivElement();
-        progressBar.setClassName(resources.Css().progressBar());
-        progressBar.getStyle().setProperty("width", "50%");
-        UIObject.ensureDebugId(progressBar, "progressBar");
+        progressBar = Document.get().createDivElement();
         operationPanel.getElement().appendChild(progressBar);
-
-        status.setText("LOADING:");
-        iconPanel.getElement().appendChild((resources.loaderIcon().getSvg().getElement()));
-        DivElement expander = Document.get().createDivElement();
-        expander.appendChild(resources.expansionIcon().getSvg().getElement());
-        expandHolder.getElement().appendChild(expander);
-
         operationPanel.addDomHandler(new ClickHandler() {
             @Override
             public void onClick(ClickEvent event) {
-                Log.error(getClass(), "" + getActive().getAttribute("id"));
-
                 delegate.onExpanderClicked();
             }
         }, ClickEvent.getType());
         operations.setVisible(false);
 
-        operationPanel.addDomHandler(new MouseDownHandler() {
-            @Override
-            public void onMouseDown(MouseDownEvent event) {
+        DivElement expander = Document.get().createDivElement();
+        expander.appendChild(resources.expansionIcon().getSvg().getElement());
+        expandHolder.getElement().appendChild(expander);
 
-                Log.error(getClass(), "onMouseDown");
-                //Update isActive state. It actually when we lose onBlur event in the parent widget.
-                boolean isActive = isActive(operationPanel.getElement());
-                if (isActive) {
-                    Log.error(getClass(), "isActive");
 
-                } else {
-                    Log.error(getClass(), " NOT Active");
-                }
-            }
-        }, MouseDownEvent.getType());
-
-    }
-
-    private native Element getActive() /*-{
-        return $doc.activeElement;
-    }-*/;
-
-        /** Return sanitized message (with all restricted HTML-tags escaped) in {@link SafeHtml}. */
-    private SafeHtml buildSafeHtmlMessage(String message) {
-        return new SafeHtmlBuilder()
-                .appendHtmlConstant("<pre " + PRE_STYLE + ">")
-                .append(SimpleHtmlSanitizer.sanitizeHtml(message))
-                .appendHtmlConstant("</pre>")
-                .toSafeHtml();
     }
 
     @Override
-    public void addOperation(String operation) {
-        Log.error(getClass(), "loader view set pocesses " + operation);
-        this.operations.add(new HTML(operation));
+    public void setOperations(List<String> operations) {
+        components = new ArrayList<>(operations.size());
+
+        this.operations.clear();
+        status.setText(LOADING);
+        status.setStyleName(resources.Css().inProgressStatusLabel());
+        iconPanel.getElement().appendChild((resources.loaderIcon().getSvg().getElement()));
+        progressBar.addClassName(resources.Css().progressBarInProgressStatus());
+        setProgressBarState(0);
+
+        for (String operation : operations) {
+            HTML operationComponent = new HTML(operation);
+            operationComponent.addStyleName(resources.Css().waitStatus());
+            this.components.add(operationComponent);
+            this.operations.add(operationComponent);
+        }
     }
 
     @Override
     public void setCurrentOperation(String operation) {
-//        currentOperation.clear();
+        currentOperation.clear();
         currentOperation.add(new HTML(operation));
+    }
+
+    @Override
+    public void setErrorStatus(int index) {
+        iconPanel.clear();
+        HTML error = new HTML("!");
+        error.addStyleName(resources.Css().iconPanelErrorStatus());
+        iconPanel.add(error);
+
+        components.get(index).addStyleName(resources.Css().errorStatus());
+        progressBar.setClassName(resources.Css().progressBarErrorStatus());
+        status.setStyleName(resources.Css().errorStatusLabel());
+        setProgressBarState(100);
+    }
+
+    @Override
+    public void setInProgressStatus(int index) {
+        components.get(index).addStyleName(resources.Css().inProgressStatus());
     }
 
     @Override
     public void setDelegate(ActionDelegate delegate) {
         this.delegate = delegate;
-    }
-
-    @Override
-    public void hide() {
-
     }
 
     @Override
@@ -157,6 +139,11 @@ public class LoaderViewImpl implements LoaderView {
     @Override
     public void collapseOperations() {
         operations.setVisible(false);
+    }
+
+    @Override
+    public void setProgressBarState(int percent) {
+        progressBar.getStyle().setProperty("width", percent + "%");
     }
 
     @Override
@@ -174,14 +161,6 @@ public class LoaderViewImpl implements LoaderView {
         operations.getElement().getStyle().setPropertyPx("top", top + 27);
         operations.getElement().getStyle().setPropertyPx("left", left);
     }
-
-    /**
-     * Check isActive status.
-     */
-    private native boolean isActive(Element element) /*-{
-        var activeElement = $doc.activeElement;
-        return activeElement.isEqualNode(element);
-    }-*/;
 
     interface LoaderViewImplUiBinder extends UiBinder<FlowPanel, LoaderViewImpl> {
     }

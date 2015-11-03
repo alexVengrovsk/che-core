@@ -12,6 +12,8 @@ package org.eclipse.che.ide.ui.loaders.initializationLoader;
 
 import com.google.gwt.user.client.ui.IsWidget;
 
+import java.util.List;
+
 
 /**
  * View of {@link LoaderPresenter}.
@@ -25,19 +27,27 @@ public interface LoaderView extends IsWidget {
          */
         void onExpanderClicked();
     }
-    void addOperation(String operation);
-
-    void setCurrentOperation(String operation);
-
     /** Sets the delegate to receive events from this view. */
     void setDelegate(ActionDelegate delegate);
 
-    /** Hide loader */
-    void hide();
+    /** Sets the list of operations for displaying. */
+    void setOperations(List<String> operations);
+
+    /** Sets the current operation for displaying. */
+    void setCurrentOperation(String operation);
+
+    /** Sets the 'error' status for operation with {@code index}. */
+    void setErrorStatus(int index);
+
+    /** Sets the 'in progress' status for operation with {@code index}. */
+    void setInProgressStatus(int index);
 
     /** Expand Operations area. */
     void expandOperations();
 
     /** Collapse Operations area. */
     void collapseOperations();
+
+    /** Displays the progress bar's state corresponding to {@code percent}. */
+    void setProgressBarState(int percent);
 }

@@ -12,12 +12,32 @@ package org.eclipse.che.ide.ui.loaders.initializationLoader;
 
 import java.util.List;
 
+import static org.eclipse.che.ide.ui.loaders.initializationLoader.OperationInfo.Status;
+
 /**
- * Information about the operation.
+ * Contains information about the operations of loading.
  *
  * @author Roman Nikitenko
  */
 public interface LoadingInfo {
 
+    /**
+     * @return the list of operations required for the current process of loading
+     */
     List<OperationInfo> getOperations();
+
+    /**
+     * @return the list of display name for operations required for the current process of loading
+     */
+    List<String> getDisplayNames();
+
+    /**
+     * Sets the status for the operation
+     *
+     * @param operationName
+     *         display name of the operation
+     * @param status
+     *         the status to setting
+     */
+    void setOperationStatus(String operationName, Status status);
 }

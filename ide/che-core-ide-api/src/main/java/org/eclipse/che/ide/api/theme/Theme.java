@@ -1287,4 +1287,11 @@ public interface Theme {
      */
     String loaderIconBackgroundColor();
 
+    /**
+     * The progress status color for loader.
+     *
+     * @return {@link String} color
+     */
+    String loaderProgressStatusColor();
+
 }

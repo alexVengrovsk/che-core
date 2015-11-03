@@ -110,7 +110,6 @@ public class BootstrapController {
             componentProvider.get().start(new Callback<Component, Exception>() {
                 @Override
                 public void onSuccess(Component result) {
-                    Log.info(getClass(), result.getClass());
                     if (result.getClass().toString().contains("WorkspaceComponent")) {
                         Scheduler.get().scheduleDeferred(new ScheduledCommand() {
                             @Override

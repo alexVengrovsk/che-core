@@ -26,12 +26,19 @@ public interface LoaderResources extends ClientBundle {
 
     interface PinionCss extends CssResource {
         String pinion();
-        String expandControl();
         String expandedImage();
+
+        String errorStatusLabel();
+        String inProgressStatusLabel();
+
+        String progressBarErrorStatus();
+        String progressBarInProgressStatus();
+
+        String iconPanelErrorStatus();
+
         String errorStatus();
-        String successStatus();
+        String waitStatus();
         String inProgressStatus();
-        String progressBar();
     }
 
     @MimeType("image/png")

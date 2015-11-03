@@ -13,40 +13,39 @@ package org.eclipse.che.ide.ui.loaders.initializationLoader;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
-import org.eclipse.che.ide.util.input.SignalKeyLogic;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static org.eclipse.che.ide.ui.loaders.initializationLoader.OperationInfo.Status;
+
 /**
- * Information about the operation.
+ * Contains information about the operations of initial loading in IDE.
  *
  * @author Roman Nikitenko
  */
 @Singleton
 public class InitialLoadingInfo implements LoadingInfo {
 
-    private List<OperationInfo> operations = new ArrayList<>();
+    private List<OperationInfo> operations   = new ArrayList<>();
+    private List<String>        displayNames = new ArrayList<>();
 
     @Inject
     public InitialLoadingInfo(LoaderPresenter loader) {
         for (Operations operation : Arrays.asList(Operations.values())) {
-            operations.add(new OperationInfo(operation.getValue(), OperationInfo.Status.WAITING, loader));
+            OperationInfo operationInfo = new OperationInfo(operation.getValue(), OperationInfo.Status.WAITING, loader);
+            operations.add(operationInfo);
+            displayNames.add(operation.getValue());
         }
     }
 
-    public OperationInfo getOperation(Operations operation) {
+    @Override
+    public void setOperationStatus(String operationName, Status status) {
         for (OperationInfo operationInfo : operations) {
-            if (operationInfo.getOperation().equals(operation.getValue())) {
-                return operationInfo;
+            if (operationInfo.getOperationName().equals(operationName)) {
+                operationInfo.setStatus(status);
             }
         }
-        return null;
-    }
-
-    public void setOperationStatus(Operations operation) {
-
     }
 
     @Override
@@ -54,10 +53,15 @@ public class InitialLoadingInfo implements LoadingInfo {
         return operations;
     }
 
+    @Override
+    public List<String> getDisplayNames() {
+        return displayNames;
+    }
+
+    /** The set of operations required for the initial loading in IDE. */
     public enum Operations {
         WORKSPACE_BOOTING("Initializing workspace"),
-        MACHINE_BOOTING("Developer Machine booting"),
-        EXTENSIONS_BOOTING("Initializing extensions");
+        MACHINE_BOOTING("Developer Machine booting");
 
         private final String value;
 

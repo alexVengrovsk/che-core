@@ -11,7 +11,7 @@
 package org.eclipse.che.ide.ui.loaders.initializationLoader;
 
 /**
- * Information about the operation.
+ * Contains the information about the operation.
  *
  * @author Roman Nikitenko
  */
@@ -38,11 +38,11 @@ public class OperationInfo {
     public void setStatus(Status status) {
         this.status = status;
         if (statusListener != null) {
-            statusListener.onStatusChanged();
+            statusListener.onStatusChanged(this);
         }
     }
 
-    public String getOperation() {
+    public String getOperationName() {
         return operation;
     }
 
@@ -58,8 +58,8 @@ public class OperationInfo {
     public enum Status {
         WAITING("WAITING"),
         IN_PROGRESS("LOADING"),
-        ERROR("ERROR"),
-        SUCCESS("SUCCESS");
+        SUCCESS("SUCCESS"),
+        ERROR("ERROR");
 
         private final String value;
 
@@ -74,6 +74,6 @@ public class OperationInfo {
 
     /** Listener's method will be invoked when status is change. */
     interface StatusListener {
-        void onStatusChanged();
+        void onStatusChanged(OperationInfo operation);
     }
 }

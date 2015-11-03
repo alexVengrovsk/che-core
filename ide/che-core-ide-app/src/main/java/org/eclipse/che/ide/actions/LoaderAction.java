@@ -21,7 +21,7 @@ import org.eclipse.che.ide.api.action.Presentation;
 import org.eclipse.che.ide.ui.loaders.initializationLoader.LoaderPresenter;
 
 /**
- * Action for display information about process of loading.
+ * Action for displaying information about a process of loading.
  *
  * @author Roman Nikitenko
  */

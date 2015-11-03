@@ -16,57 +16,87 @@ import com.google.inject.Singleton;
 
 import java.util.List;
 
+import static org.eclipse.che.ide.ui.loaders.initializationLoader.OperationInfo.Status.SUCCESS;
+
 /**
- * Loader for displaying information about the operation.
+ * Loader for displaying information about a process of loading.
  *
  * @author Roman Nikitenko
  */
 @Singleton
 public class LoaderPresenter implements OperationInfo.StatusListener, LoaderView.ActionDelegate {
 
-    private final LoaderView view;
-    private List<OperationInfo> operations;
-    private boolean expandPanelState;
+    private final LoaderView          view;
+    private       List<OperationInfo> operations;
+    private       boolean             expandPanelState;
 
     @Inject
     public LoaderPresenter(LoaderView view) {
         this.view = view;
-        view.setDelegate(this);
+        this.view.setDelegate(this);
+
         expandPanelState = false;
     }
 
+    /**
+     * @return custom Widget that represents the loader's action in UI.
+     */
     public Widget getCustomComponent() {
         return view.asWidget();
     }
 
-    public void showProgressLoading(LoadingInfo loadingInfo) {
-        operations = loadingInfo.getOperations();
-        view.setCurrentOperation(operations.get(0).getOperation());
-        for (OperationInfo operation : operations) {
-            view.addOperation(operation.getOperation());
-        }
-    }
-
-
     /**
-     * Hide loader and clean it.
+     * Displays information about a process of loading.
+     *
+     * @param loadingInfo
+     *         the object which contains information about operations of loading
      */
-    public void hide() {
+    public void show(LoadingInfo loadingInfo) {
+        operations = loadingInfo.getOperations();
+        List<String> displayNames = loadingInfo.getDisplayNames();
 
-    }
-
-    @Override
-    public void onStatusChanged() {
-//        view.update();
+        view.setOperations(displayNames);
+        updateProgressBarState();
     }
 
     @Override
     public void onExpanderClicked() {
         if (expandPanelState) {
-//            view.collapseOperations();
+            view.collapseOperations();
         } else {
             view.expandOperations();
         }
         expandPanelState = !expandPanelState;
+    }
+
+    @Override
+    public void onStatusChanged(OperationInfo operation) {
+        switch (operation.getStatus()) {
+            case IN_PROGRESS:
+                view.setInProgressStatus(operations.indexOf(operation));
+                view.setCurrentOperation(operation.getOperationName());
+                break;
+            case SUCCESS:
+                updateProgressBarState();
+                break;
+            case ERROR:
+                view.setErrorStatus(operations.indexOf(operation));
+                view.setCurrentOperation("Error while " + operation.getOperationName());
+                break;
+        }
+    }
+
+    private void updateProgressBarState() {
+        if (operations.size() == 0) {
+            return;
+        }
+
+        int completedOperations = 0;
+        for (OperationInfo operation : operations) {
+            completedOperations = operation.getStatus().equals(SUCCESS) ? completedOperations + 1 : completedOperations;
+        }
+
+        int completedState = completedOperations * 100 / operations.size();
+        view.setProgressBarState(completedState);
     }
 }
