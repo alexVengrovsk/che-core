@@ -10,7 +10,6 @@
  *******************************************************************************/
 package org.eclipse.che.ide.ui.listbox;
 
-
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
@@ -31,9 +30,6 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.FocusWidget;
 import com.google.gwt.user.client.ui.RadioButton;
 import com.google.gwt.user.client.ui.RootPanel;
-
-import org.eclipse.che.ide.util.loging.Log;
-
 
 /**
  * Custom list box widget for use instead of com.google.gwt.user.client.ui.ListBox which based on select tag.
@@ -87,7 +83,6 @@ public class CustomListBox extends FocusWidget implements HasChangeHandlers {
         addDomHandler(new BlurHandler() {
             @Override
             public void onBlur(BlurEvent event) {
-                Log.error(getClass(), "BlurEvent");
                 optionsPanel.setVisible(false);
                 isActive = false;
             }

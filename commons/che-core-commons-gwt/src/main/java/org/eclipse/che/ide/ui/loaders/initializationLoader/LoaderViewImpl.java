@@ -14,6 +14,8 @@ import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.FlowPanel;
@@ -23,7 +25,8 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
-import org.eclipse.che.ide.ui.loaders.LoaderResources;
+import org.eclipse.che.ide.util.loging.Log;
+import org.vectomatic.dom.svg.ui.SVGResource;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,6 +41,8 @@ public class LoaderViewImpl implements LoaderView {
 
     private static final String LOADING = "LOADING:";
 
+    @UiField(provided = true)
+    Resources resources;
     @UiField
     FlowPanel iconPanel;
     @UiField
@@ -52,17 +57,20 @@ public class LoaderViewImpl implements LoaderView {
     Label     status;
 
     DivElement progressBar;
-    List<HTML> components;
+    FlowPanel  rootElement;
 
-    private FlowPanel       rootElement;
-    private LoaderResources resources;
-    private ActionDelegate  delegate;
+    private List<HTML>     components;
+    private ActionDelegate delegate;
+    private LoaderCss      styles;
 
     @Inject
     public LoaderViewImpl(LoaderViewImplUiBinder uiBinder,
-                          LoaderResources resources) {
+                          Resources resources) {
         this.resources = resources;
-        resources.Css().ensureInjected();
+
+        styles = resources.css();
+        styles.ensureInjected();
+
         rootElement = uiBinder.createAndBindUi(this);
 
         progressBar = Document.get().createDivElement();
@@ -88,14 +96,14 @@ public class LoaderViewImpl implements LoaderView {
 
         this.operations.clear();
         status.setText(LOADING);
-        status.setStyleName(resources.Css().inProgressStatusLabel());
+        status.setStyleName(styles.inProgressStatusLabel());
         iconPanel.getElement().appendChild((resources.loaderIcon().getSvg().getElement()));
-        progressBar.addClassName(resources.Css().progressBarInProgressStatus());
+        progressBar.addClassName(styles.progressBarInProgressStatus());
         setProgressBarState(0);
 
         for (String operation : operations) {
             HTML operationComponent = new HTML(operation);
-            operationComponent.addStyleName(resources.Css().waitStatus());
+            operationComponent.addStyleName(styles.waitStatus());
             this.components.add(operationComponent);
             this.operations.add(operationComponent);
         }
@@ -111,18 +119,18 @@ public class LoaderViewImpl implements LoaderView {
     public void setErrorStatus(int index) {
         iconPanel.clear();
         HTML error = new HTML("!");
-        error.addStyleName(resources.Css().iconPanelErrorStatus());
+        error.addStyleName(styles.iconPanelErrorStatus());
         iconPanel.add(error);
 
-        components.get(index).addStyleName(resources.Css().errorStatus());
-        progressBar.setClassName(resources.Css().progressBarErrorStatus());
-        status.setStyleName(resources.Css().errorStatusLabel());
+        components.get(index).addStyleName(styles.errorStatus());
+        progressBar.setClassName(styles.progressBarErrorStatus());
+        status.setStyleName(styles.errorStatusLabel());
         setProgressBarState(100);
     }
 
     @Override
     public void setInProgressStatus(int index) {
-        components.get(index).addStyleName(resources.Css().inProgressStatus());
+        components.get(index).addStyleName(styles.inProgressStatus());
     }
 
     @Override
@@ -160,6 +168,49 @@ public class LoaderViewImpl implements LoaderView {
         int left = currentOperation.getElement().getAbsoluteLeft();
         operations.getElement().getStyle().setPropertyPx("top", top + 27);
         operations.getElement().getStyle().setPropertyPx("left", left);
+    }
+
+    /** Styles for loader. */
+    public interface LoaderCss extends CssResource {
+        String errorStatusLabel();
+
+        String inProgressStatusLabel();
+
+        String progressBarErrorStatus();
+
+        String progressBarInProgressStatus();
+
+        String errorStatus();
+
+        String inProgressStatus();
+
+        String waitStatus();
+
+        String iconPanelErrorStatus();
+
+        String statusPanel();
+
+        String iconPanel();
+
+        String operationPanel();
+
+        String operations();
+
+        String currentOperation();
+
+        String expandedIcon();
+    }
+
+    /** Resources for loader. */
+    public interface Resources extends ClientBundle {
+        @Source({"Loader.css"})
+        LoaderCss css();
+
+        @Source("expansionIcon.svg")
+        SVGResource expansionIcon();
+
+        @Source("loaderIcon.svg")
+        SVGResource loaderIcon();
     }
 
     interface LoaderViewImplUiBinder extends UiBinder<FlowPanel, LoaderViewImpl> {

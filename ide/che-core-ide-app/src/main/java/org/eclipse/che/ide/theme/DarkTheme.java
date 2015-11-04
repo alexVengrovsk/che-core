@@ -1147,6 +1147,6 @@ public class DarkTheme implements Theme {
 
     @Override
     public String loaderProgressStatusColor() {
-        return "#4EABFF";
+        return "#4a90e2";
     }
 }

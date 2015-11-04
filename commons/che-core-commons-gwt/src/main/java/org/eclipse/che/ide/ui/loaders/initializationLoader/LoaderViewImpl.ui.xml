@@ -13,12 +13,8 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui">
+    <ui:with field='resources' type='org.eclipse.che.ide.ui.loaders.initializationLoader.LoaderViewImpl.Resources'/>
     <ui:style>
-        @eval expanderColor org.eclipse.che.ide.api.theme.Style.theme.loaderExpanderColor();
-        @eval iconBackgroundColor org.eclipse.che.ide.api.theme.Style.theme.loaderIconBackgroundColor();
-        @eval borderColor org.eclipse.che.ide.api.theme.Style.theme.getMainMenuSelectedBorderColor();
-        @eval operationBoxColor org.eclipse.che.ide.api.theme.Style.theme.getToolbarBackgroundColor();
-
         .animate {
             transition: width 0.25s linear, height 0.25s linear;
             overflow: hidden;
@@ -36,91 +32,24 @@
             display: inline-block;
             margin: 0 !important;
         }
-
-        .statusPanel {
-            margin-top: auto;
-            display: inline;
-            float: left;
-            width: 65px;
-            height: 100%;
-            line-height: 24px;
-            background-color: iconBackgroundColor;
-        }
-
-        .iconPanel {
-            float: left;
-            width: 40px;
-            height: 100%;
-            margin-top: auto;
-            line-height: 24px;
-            background-color: iconBackgroundColor;
-        }
-
-        .iconPanel > svg rect {
-            fill: #4EABFF;
-        }
-
-        .iconPanel > svg {
-            margin-top: -4px;
-        }
-
-        .operationPanel {
-            margin-top: auto;
-            display: inline;
-            float: left;
-            width: 215px;
-            height: 100%;
-            line-height: 24px;
-        }
-
-        .operations {
-            position: fixed;
-            min-width: 216px;
-            text-align: left;
-            background-color: operationBoxColor;
-            padding-left: 15px;
-            border: 1px solid borderColor;
-            border-bottom-right-radius: 3px;
-            border-bottom-left-radius: 3px;
-        }
-
-        .currentOperation {
-            min-width: 215px;
-            height: inherit;
-            background-color: inherit;
-            border: none;
-            line-height: 22px;
-        }
-
-        .expandedIcon {
-            float: right;
-            transform: scaleY(0.5) rotate(90deg);
-            margin-right: 5px;
-            margin-top: 1px;
-        }
-
-        .expandedIcon svg {
-            width: 12px;
-            height: 12px;
-            fill: expanderColor;
-        }
-
-        .expandedIcon:hover svg {
-            fill: expanderColor;
-        }
     </ui:style>
 
     <g:FlowPanel addStyleNames="{style.mainPanel}">
-        <g:FlowPanel ui:field="iconPanel" addStyleNames="{style.iconPanel}" debugId="loaderView-iconPanel"/>
-        <g:FlowPanel addStyleNames="{style.statusPanel}">
+        <g:FlowPanel ui:field="iconPanel" addStyleNames="{resources.css.iconPanel}"
+                     debugId="loaderView-iconPanel"/>
+        <g:FlowPanel addStyleNames="{resources.css.statusPanel}">
             <g:Label ui:field="status"/>
         </g:FlowPanel>
         <g:FlowPanel ui:field="operationPanel" addStyleNames="{style.rightPanel}">
-            <g:FlowPanel addStyleNames="{style.operationPanel}" debugId="loaderView-operationPanel">
-                <g:FlowPanel ui:field="currentOperation" addStyleNames="{style.currentOperation}" debugId="loaderView-currentOperation"/>
-                <g:FlowPanel ui:field="operations" addStyleNames="{style.operations}" debugId="loaderView-operations"/>
+            <g:FlowPanel addStyleNames="{resources.css.operationPanel}"
+                         debugId="loaderView-operationPanel">
+                <g:FlowPanel ui:field="currentOperation" addStyleNames="{resources.css.currentOperation}"
+                             debugId="loaderView-currentOperation"/>
+                <g:FlowPanel ui:field="operations" addStyleNames="{resources.css.operations}"
+                             debugId="loaderView-operations"/>
             </g:FlowPanel>
-            <g:FlowPanel ui:field="expandHolder" addStyleNames="{style.expandedIcon}" debugId="loaderView-expandedImage"/>
+            <g:FlowPanel ui:field="expandHolder" addStyleNames="{resources.css.expandedIcon}"
+                         debugId="loaderView-expandedImage"/>
         </g:FlowPanel>
     </g:FlowPanel>
 </ui:UiBinder>

@@ -43,59 +43,6 @@
     animation-name: invertBarrelRoll;
 }
 
-.expandedImage {
-    transform: rotate(90deg);
-    -webkit-transform: rotate(90deg);
-    margin-right: 3px
-}
-
-.errorStatusLabel {
-    color: #F62217;
-    font-weight: bold;
-    float: left;
-}
-
-.inProgressStatusLabel {
-    color: #61b7ef;
-    font-weight: bold;
-    float: left;
-}
-
-.progressBarErrorStatus {
-    background-color: #F62217;
-    height: 3px;
-    display: block;
-    position: relative;
-    left: 0;
-    top: 19px;
-}
-
-.progressBarInProgressStatus {
-    background-color: #4EABFF;
-    height: 3px;
-    display: block;
-    position: relative;
-    left: 0;
-    top: 19px;
-}
-
-.iconPanelErrorStatus {
-    color: #F62217;
-    font-size: 21px;
-}
-
-.errorStatus {
-    color: #F62217;
-}
-
-.waitStatus {
-    color: #5A5A5A;
-}
-
-.inProgressStatus {
-    color: #FFFFFF;
-}
-
 @-webkit-keyframes barrelRoll {
     0% {
         -webkit-transform: rotate(0deg);

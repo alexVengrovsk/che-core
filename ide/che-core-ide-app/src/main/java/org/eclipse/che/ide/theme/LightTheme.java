@@ -1124,6 +1124,6 @@ public class LightTheme implements Theme {
 
     @Override
     public String loaderProgressStatusColor() {
-        return "#4EABFF";
+        return "#1a68af";
     }
 }
