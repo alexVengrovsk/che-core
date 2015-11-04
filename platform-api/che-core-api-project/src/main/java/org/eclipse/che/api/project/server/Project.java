@@ -123,14 +123,6 @@ public class Project {
         manager.updateProjectConfig(this, config);
     }
 
-    public final void updateConfig(ProjectConfigImpl config) throws ServerException,
-                                                                    ValueStorageException,
-                                                                    ProjectTypeConstraintException,
-                                                                    InvalidValueException {
-
-        manager.updateProjectConfig(this, config);
-    }
-
     /**
      * Gets visibility of this project, either 'private' or 'public'.Project is considered to be 'public' if any user has read access to
      * it.
