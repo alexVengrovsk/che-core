@@ -112,6 +112,10 @@ public class ModuleConfigImpl implements ModuleConfig {
         return modules;
     }
 
+    public void setModules(List<ModuleConfig> modules) {
+        this.modules = modules;
+    }
+
     public void setAttributes(Map<String, List<String>> attributes) {
         this.attributes = attributes;
     }

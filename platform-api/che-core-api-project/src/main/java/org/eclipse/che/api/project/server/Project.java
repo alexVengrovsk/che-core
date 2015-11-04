@@ -19,6 +19,7 @@ import org.eclipse.che.api.vfs.server.VirtualFile;
 import org.eclipse.che.api.vfs.shared.dto.AccessControlEntry;
 import org.eclipse.che.api.vfs.shared.dto.Principal;
 import org.eclipse.che.api.vfs.shared.dto.VirtualFileSystemInfo.BasicPermissions;
+import org.eclipse.che.api.workspace.server.model.impl.ProjectConfigImpl;
 import org.eclipse.che.dto.server.DtoFactory;
 
 import javax.ws.rs.core.MediaType;
@@ -118,6 +119,14 @@ public class Project {
                                                                 ValueStorageException,
                                                                 ProjectTypeConstraintException,
                                                                 InvalidValueException {
+        manager.updateProjectConfig(this, config);
+    }
+
+    public final void updateConfig(ProjectConfigImpl config) throws ServerException,
+                                                                    ValueStorageException,
+                                                                    ProjectTypeConstraintException,
+                                                                    InvalidValueException {
+
         manager.updateProjectConfig(this, config);
     }
 

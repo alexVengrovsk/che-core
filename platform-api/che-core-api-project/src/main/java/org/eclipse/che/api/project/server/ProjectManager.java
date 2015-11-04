@@ -22,11 +22,12 @@ import org.eclipse.che.api.project.server.type.AttributeValue;
 import org.eclipse.che.api.project.server.type.ProjectTypeRegistry;
 import org.eclipse.che.api.project.shared.dto.SourceEstimation;
 import org.eclipse.che.api.vfs.server.VirtualFileSystemRegistry;
+import org.eclipse.che.api.workspace.server.model.impl.ProjectConfigImpl;
+import org.eclipse.che.api.workspace.shared.dto.ModuleConfigDto;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * A manager for codenvy projects.
@@ -133,6 +134,11 @@ public interface ProjectManager {
                                                                            ProjectTypeConstraintException,
                                                                            InvalidValueException;
 
+    void updateProjectConfig(Project project, ProjectConfigImpl config) throws ServerException,
+                                                                           ValueStorageException,
+                                                                           ProjectTypeConstraintException,
+                                                                           InvalidValueException;
+
     /**
      * Gets ProjectMisc.
      *
@@ -216,7 +222,7 @@ public interface ProjectManager {
     Project addModule(String workspace,
                       String projectPath,
                       String modulePath,
-                      ModuleConfig moduleConfig,
+                      ModuleConfigDto moduleConfig,
                       Map<String, String> options) throws ConflictException, ForbiddenException, ServerException, NotFoundException;
 
 
