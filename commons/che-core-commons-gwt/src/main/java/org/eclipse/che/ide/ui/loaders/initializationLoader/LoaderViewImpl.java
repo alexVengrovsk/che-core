@@ -25,7 +25,6 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
-import org.eclipse.che.ide.util.loging.Log;
 import org.vectomatic.dom.svg.ui.SVGResource;
 
 import java.util.ArrayList;
@@ -93,11 +92,14 @@ public class LoaderViewImpl implements LoaderView {
     @Override
     public void setOperations(List<String> operations) {
         components = new ArrayList<>(operations.size());
-
         this.operations.clear();
+
         status.setText(LOADING);
         status.setStyleName(styles.inProgressStatusLabel());
+
+        iconPanel.clear();
         iconPanel.getElement().appendChild((resources.loaderIcon().getSvg().getElement()));
+
         progressBar.addClassName(styles.progressBarInProgressStatus());
         setProgressBarState(0);
 
