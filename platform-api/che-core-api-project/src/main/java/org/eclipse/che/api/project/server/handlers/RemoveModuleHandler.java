@@ -13,8 +13,8 @@ package org.eclipse.che.api.project.server.handlers;
 import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.ForbiddenException;
 import org.eclipse.che.api.core.ServerException;
+import org.eclipse.che.api.core.model.workspace.ProjectConfig;
 import org.eclipse.che.api.project.server.FolderEntry;
-import org.eclipse.che.api.project.server.ProjectConfig;
 
 /**
  * A handler for handling the removal of a module.

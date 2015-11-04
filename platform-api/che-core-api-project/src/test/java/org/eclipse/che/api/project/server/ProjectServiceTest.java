@@ -14,6 +14,7 @@ import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.ForbiddenException;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
+import org.eclipse.che.api.core.model.workspace.ProjectConfig;
 import org.eclipse.che.api.core.notification.EventService;
 import org.eclipse.che.api.core.rest.ApiExceptionMapper;
 import org.eclipse.che.api.core.rest.CodenvyJsonProvider;
@@ -210,7 +211,7 @@ public class ProjectServiceTest {
 
         pm.createProject(workspace,
                          "my_project",
-                         new ProjectConfig("my test project", "my_project_type", new HashMap<>(), null, null),
+                         DtoFactory.getInstance().createDto(ProjectConfigDto.class).withDescription("my test project").withType("my_project_type").withAttributes(new HashMap<>()),
                          null);
         verify(httpJsonHelper).request(any(),
                                        eq(apiEndpoint + "/workspace/" + workspace + "/project"),
@@ -303,7 +304,8 @@ public class ProjectServiceTest {
 
         Project myProject = pm.getProject(workspace, "my_project");
 
-        ProjectConfig config = new ProjectConfig("my test module", pt.getId());
+        ProjectConfig config = DtoFactory.getInstance().createDto(ProjectConfigDto.class).withDescription("my test module").withType(
+                pt.getId());
 
         FolderEntry moduleFolder = myProject.getBaseFolder().createFolder("my_module");
         Project module = new Project(moduleFolder, pm);
@@ -357,7 +359,9 @@ public class ProjectServiceTest {
 
         Project myProject = pm.getProject(workspace, "my_project");
 
-        ProjectConfig config = new ProjectConfig("my test module", pt.getId());
+        ProjectConfig config = DtoFactory.getInstance().createDto(ProjectConfigDto.class).withDescription("my test module").withType(
+                pt.getId());
+
 
         FolderEntry moduleFolder = myProject.getBaseFolder().createFolder("my_module");
         Project module = new Project(moduleFolder, pm);
@@ -476,7 +480,9 @@ public class ProjectServiceTest {
         pm.getProjectTypeRegistry().registerProjectType(pt);
         Project myProject = pm.getProject(workspace, "my_project");
 
-        ProjectConfig config = new ProjectConfig("my test module", pt.getId());
+        ProjectConfig config = DtoFactory.getInstance().createDto(ProjectConfigDto.class).withDescription("my test module").withType(
+                pt.getId());
+
         FolderEntry moduleFolder = myProject.getBaseFolder().createFolder("my_module");
         Project module = new Project(moduleFolder, pm);
         module.updateConfig(config);
@@ -519,7 +525,7 @@ public class ProjectServiceTest {
     public void testCreateProject() throws Exception {
         phRegistry.register(new CreateProjectHandler() {
             @Override
-            public void onCreateProject(FolderEntry baseFolder, Map<String, AttributeValue> attributes, Map<String, String> options)
+            public void onCreateProject(FolderEntry baseFolder, Map<String, List<String>> attributes, Map<String, String> options)
                     throws ForbiddenException, ConflictException, ServerException {
                 baseFolder.createFolder("a");
                 baseFolder.createFolder("b");
@@ -592,10 +598,10 @@ public class ProjectServiceTest {
         ProjectConfig config = project.getConfig();
 
         assertEquals(config.getDescription(), "new project");
-        assertEquals(config.getTypeId(), "testCreateProject");
-        AttributeValue attributeVal = config.getAttributes().get("new_project_attribute");
+        assertEquals(config.getType(), "testCreateProject");
+        String attributeVal = config.getAttributes().get("new_project_attribute").get(0);
         assertNotNull(attributeVal);
-        assertEquals(attributeVal.getString(), "to be or not to be");
+        assertEquals(attributeVal, "to be or not to be");
 
         assertNotNull(project.getBaseFolder().getChild("a"));
         assertNotNull(project.getBaseFolder().getChild("b"));
@@ -612,7 +618,7 @@ public class ProjectServiceTest {
             }
 
             @Override
-            public void onCreateProject(FolderEntry baseFolder, Map<String, AttributeValue> attributes, Map<String, String> options)
+            public void onCreateProject(FolderEntry baseFolder, Map<String, List<String>> attributes, Map<String, String> options)
                     throws ConflictException, ForbiddenException, ServerException {
                 baseFolder.createFolder("a");
                 baseFolder.createFolder("b");
@@ -673,10 +679,10 @@ public class ProjectServiceTest {
         ProjectConfig config = project.getConfig();
 
         assertEquals(config.getDescription(), "new module");
-        assertEquals(config.getTypeId(), "my_project_type");
-        AttributeValue attributeVal = config.getAttributes().get("my_attribute");
+        assertEquals(config.getType(), "my_project_type");
+        String attributeVal = config.getAttributes().get("my_attribute").get(0);
 
-        assertEquals(attributeVal.getString(), "attribute value 1");
+        assertEquals(attributeVal, "attribute value 1");
 
         assertNotNull(project.getBaseFolder().getChild("a"));
         assertNotNull(project.getBaseFolder().getChild("b"));
@@ -692,7 +698,9 @@ public class ProjectServiceTest {
                                                         .withSource(DtoFactory.getInstance().createDto(SourceStorageDto.class));
         modules.add(moduleConfig);
 
-        pm.createProject(workspace, "new_module", new ProjectConfig("", "my_project_type"), null);
+        pm.createProject(workspace, "new_module",
+                         DtoFactory.getInstance().createDto(ProjectConfigDto.class).withDescription("created project").withType(
+                                 "my_project_type"), null);
         pm.addModule(workspace, "my_project", "/new_module", null, null);
 
         ContainerResponse response = launcher.service(POST,
@@ -798,7 +806,10 @@ public class ProjectServiceTest {
             }
         };
         pm.getProjectTypeRegistry().registerProjectType(pt);
-        pm.createProject(workspace, "testUpdateProject", new ProjectConfig("created project", "testUpdateProject"), null);
+
+        pm.createProject(workspace, "testUpdateProject",
+                         DtoFactory.getInstance().createDto(ProjectConfigDto.class).withDescription("created project").withType(
+                                 "testUpdateProject"), null);
 
         Map<String, List<String>> attributeValues = new LinkedHashMap<>();
         attributeValues.put("my_attribute", Arrays.asList("to be or not to be"));
@@ -832,11 +843,11 @@ public class ProjectServiceTest {
         ProjectConfig config = project.getConfig();
 
         assertEquals(config.getDescription(), "updated project");
-        assertEquals(config.getTypeId(), "testUpdateProject");
+        assertEquals(config.getType(), "testUpdateProject");
         //Assert.assertEquals(description.getProjectType().getName(), "my project type");
-        AttributeValue attributeVal = config.getAttributes().get("my_attribute");
+        String attributeVal = config.getAttributes().get("my_attribute").get(0);
         assertNotNull(attributeVal);
-        assertEquals(attributeVal.getList(), Arrays.asList("to be or not to be"));
+        assertEquals(attributeVal, "to be or not to be");
     }
 
     @Test
@@ -875,7 +886,7 @@ public class ProjectServiceTest {
         ProjectConfig description = project.getConfig();
 
         assertEquals(description.getDescription(), "updated project");
-        assertEquals(description.getTypeId(), "my_project_type");
+        assertEquals(description.getType(), "my_project_type");
     }
 
     @Test

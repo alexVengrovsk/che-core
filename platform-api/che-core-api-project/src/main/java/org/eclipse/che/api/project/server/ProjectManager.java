@@ -17,6 +17,7 @@ import org.eclipse.che.api.core.ForbiddenException;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.core.model.workspace.ModuleConfig;
+import org.eclipse.che.api.core.model.workspace.ProjectConfig;
 import org.eclipse.che.api.project.server.handlers.ProjectHandlerRegistry;
 import org.eclipse.che.api.project.server.type.AttributeValue;
 import org.eclipse.che.api.project.server.type.ProjectTypeRegistry;
@@ -133,12 +134,6 @@ public interface ProjectManager {
                                                                            ValueStorageException,
                                                                            ProjectTypeConstraintException,
                                                                            InvalidValueException;
-
-    void updateProjectConfig(Project project, ProjectConfigImpl config) throws ServerException,
-                                                                           ValueStorageException,
-                                                                           ProjectTypeConstraintException,
-                                                                           InvalidValueException;
-
     /**
      * Gets ProjectMisc.
      *
