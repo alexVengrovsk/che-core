@@ -525,7 +525,7 @@ public class ProjectServiceTest {
     public void testCreateProject() throws Exception {
         phRegistry.register(new CreateProjectHandler() {
             @Override
-            public void onCreateProject(FolderEntry baseFolder, Map<String, List<String>> attributes, Map<String, String> options)
+            public void onCreateProject(FolderEntry baseFolder, Map<String, AttributeValue> attributes, Map<String, String> options)
                     throws ForbiddenException, ConflictException, ServerException {
                 baseFolder.createFolder("a");
                 baseFolder.createFolder("b");
@@ -618,7 +618,7 @@ public class ProjectServiceTest {
             }
 
             @Override
-            public void onCreateProject(FolderEntry baseFolder, Map<String, List<String>> attributes, Map<String, String> options)
+            public void onCreateProject(FolderEntry baseFolder, Map<String, AttributeValue> attributes, Map<String, String> options)
                     throws ConflictException, ForbiddenException, ServerException {
                 baseFolder.createFolder("a");
                 baseFolder.createFolder("b");

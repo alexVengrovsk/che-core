@@ -232,8 +232,14 @@ public final class DefaultProjectManager implements ProjectManager {
         final CreateProjectHandler generator = handlers.getCreateProjectHandler(projectConfig.getType());
 
         if (generator != null) {
-            generator.onCreateProject(project.getBaseFolder(),
-                                      projectConfig.getAttributes(), options);
+            final Map<String, AttributeValue> valueMap = new HashMap<>();
+            if (projectConfig.getAttributes() != null) {
+                final Map<String, List<String>> attributes = projectConfig.getAttributes();
+                for (String key : attributes.keySet()) {
+                    valueMap.put(key, new AttributeValue(attributes.get(key)));
+                }
+            }
+            generator.onCreateProject(project.getBaseFolder(), valueMap, options);
         }
 
         project.updateConfig(projectConfig);
@@ -348,9 +354,16 @@ public final class DefaultProjectManager implements ProjectManager {
 
             module = new Project((FolderEntry)moduleFolder, this);
 
+            final Map<String, AttributeValue> valueMap = new HashMap<>();
+            if (moduleConfig.getAttributes() != null) {
+                final Map<String, List<String>> attributes = moduleConfig.getAttributes();
+                for (String key : attributes.keySet()) {
+                    valueMap.put(key, new AttributeValue(attributes.get(key)));
+                }
+            }
             final CreateProjectHandler generator = this.getHandlers().getCreateProjectHandler(moduleConfig.getType());
             if (generator != null) {
-                generator.onCreateProject(module.getBaseFolder(), moduleConfig.getAttributes(), options);
+                generator.onCreateProject(module.getBaseFolder(), valueMap, options);
             }
             final ProjectMisc misc = module.getMisc();
             misc.setCreationDate(System.currentTimeMillis());
