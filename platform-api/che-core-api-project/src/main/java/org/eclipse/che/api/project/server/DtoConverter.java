@@ -12,6 +12,7 @@ package org.eclipse.che.api.project.server;
 
 import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.core.ServerException;
+import org.eclipse.che.api.core.model.workspace.ProjectConfig;
 import org.eclipse.che.api.core.rest.shared.dto.Link;
 import org.eclipse.che.api.core.util.LinksHelper;
 import org.eclipse.che.api.project.server.type.Attribute;
@@ -70,50 +71,6 @@ public class DtoConverter {
 
     private DtoConverter() {
     }
-
-
-
-    public static ProjectConfig fromProjectConfigDto(ProjectConfigDto dto, ProjectTypeRegistry typeRegistry) throws ServerException,
-                                                                                                              ProjectTypeConstraintException,
-                                                                                                              InvalidValueException,
-                                                                                                              ValueStorageException {
-        if (dto.getType() == null) {
-            throw new InvalidValueException("Invalid Project definition. Primary project type is not defined.");
-        }
-
-        if (typeRegistry.getProjectType(dto.getType()) == null) {
-            throw new ProjectTypeConstraintException("Primary project type is not registered " + dto.getType());
-        }
-
-        // primary
-        final Set<ProjectType> validTypes = new HashSet<>();
-        validTypes.add(typeRegistry.getProjectType(dto.getType()));
-
-        // mixins
-        final List<String> validMixins = new ArrayList<>();
-        for (String typeId : dto.getMixinTypes()) {
-            ProjectType mixinType = typeRegistry.getProjectType(typeId);
-            if (mixinType != null) {  // otherwise just ignore
-                validTypes.add(mixinType);
-                validMixins.add(typeId);
-            }
-        }
-
-        // attributes
-        final Map<String, List<String>> updateAttributes = dto.getAttributes();
-        final HashMap<String, AttributeValue> attributes = new HashMap<>(updateAttributes.size());
-        for (Map.Entry<String, List<String>> entry : updateAttributes.entrySet()) {
-            for (ProjectType projectType : validTypes) {
-                Attribute attr = projectType.getAttribute(entry.getKey());
-                if (attr != null) {
-                    attributes.put(attr.getName(), new AttributeValue(entry.getValue()));
-                }
-            }
-        }
-
-        return new ProjectConfig(dto.getDescription(), dto.getType(), attributes, "", validMixins);
-    }
-
 
 
     public static ProjectTypeDefinition toTypeDefinition(ProjectType projectType) {
@@ -231,19 +188,11 @@ public class DtoConverter {
 
         if (config != null) {
             dto.withDescription(config.getDescription());
-            dto.withRecipe(config.getRecipe());
-            String typeId = config.getTypeId();
+            //dto.withRecipe(config.getRecipe());
+            String typeId = config.getType();
             dto.withType(typeId).withTypeName(ptRegistry.getProjectType(typeId).getDisplayName()).withMixins(config.getMixinTypes());
 
-            final Map<String, AttributeValue> attributes = config.getAttributes();
-
-            final Map<String, List<String>> attributesMap = new LinkedHashMap<>(attributes.size());
-            if (!attributes.isEmpty()) {
-                for (String attrName : attributes.keySet()) {
-                    attributesMap.put(attrName, attributes.get(attrName).getList());
-                }
-            }
-            dto.withAttributes(attributesMap);
+            dto.withAttributes(config.getAttributes());
         }
 
         final User currentUser = environmentContext.getUser();
@@ -320,7 +269,7 @@ public class DtoConverter {
 
         try {
             final ProjectConfig projectConfig = project.getConfig();
-            dto.withDescription(projectConfig.getDescription()).withType(projectConfig.getTypeId());
+            dto.withDescription(projectConfig.getDescription()).withType(projectConfig.getType());
         } catch (ServerException | ValueStorageException | ProjectTypeConstraintException e) {
             dto.withType(BaseProjectType.ID).withTypeName("blank");
             dto.getProblems().add(createProjectProblem(dtoFactory, e));

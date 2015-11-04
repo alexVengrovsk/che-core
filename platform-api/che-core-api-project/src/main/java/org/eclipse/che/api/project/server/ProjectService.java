@@ -25,6 +25,7 @@ import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.core.UnauthorizedException;
 import org.eclipse.che.api.core.model.workspace.ModuleConfig;
+import org.eclipse.che.api.core.model.workspace.ProjectConfig;
 import org.eclipse.che.api.core.notification.EventService;
 import org.eclipse.che.api.core.rest.Service;
 import org.eclipse.che.api.core.rest.annotations.Description;
@@ -92,7 +93,6 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import static org.eclipse.che.api.project.server.DtoConverter.fromProjectConfigDto;
 
 /**
  * @author andrew00x
@@ -237,8 +237,7 @@ public class ProjectService extends Service {
         Map<String, String> options = Collections.emptyMap();
 
         final Project project = projectManager.createProject(workspace, name,
-                                                             fromProjectConfigDto(projectConfigDto,
-                                                                                  projectManager.getProjectTypeRegistry()),
+                                                             projectConfigDto,
                                                              options);
 
         final ProjectDescriptor descriptor = DtoConverter.toProjectDescriptor(project,
@@ -345,15 +344,14 @@ public class ProjectService extends Service {
                                            @PathParam("path") String path,
                                            ProjectConfigDto projectConfigDto)
             throws NotFoundException, ConflictException, ForbiddenException, ServerException, IOException {
-        ProjectConfig newConfig = fromProjectConfigDto(projectConfigDto, projectManager.getProjectTypeRegistry());
         Project project;
 
         if (projectManager.getProject(workspace, path) != null) {
-            project = projectManager.updateProject(workspace, path, newConfig);
+            project = projectManager.updateProject(workspace, path, projectConfigDto);
         } else {
             FolderEntry baseProjectFolder = (FolderEntry)projectManager.getProjectsRoot(workspace).getChild(path);
             try {
-                project = projectManager.convertFolderToProject(workspace, path, newConfig);
+                project = projectManager.convertFolderToProject(workspace, path, projectConfigDto);
                 reindexProject(System.currentTimeMillis(), baseProjectFolder, project);
                 eventService.publish(new ProjectCreatedEvent(project.getWorkspace(), project.getPath()));
                 logProjectCreatedEvent(projectConfigDto.getName(), projectConfigDto.getType());
@@ -659,7 +657,7 @@ public class ProjectService extends Service {
             final Project project = projectManager.getProject(copy.getWorkspace(), copy.getPath());
             if (project != null) {
                 final String name = project.getName();
-                final String projectType = project.getConfig().getTypeId();
+                final String projectType = project.getConfig().getType();
 
                 logProjectCreatedEvent(name, projectType);
             }
@@ -707,7 +705,7 @@ public class ProjectService extends Service {
             final Project project = projectManager.getProject(entry.getWorkspace(), entry.getPath());
             if (project != null) {
                 final String name = project.getName();
-                final String projectType = project.getConfig().getTypeId();
+                final String projectType = project.getConfig().getType();
                 LOG.info("EVENT#project-destroyed# PROJECT#{}# TYPE#{}# WS#{}# USER#{}#", name, projectType,
                          EnvironmentContext.getCurrent().getWorkspaceName(), EnvironmentContext.getCurrent().getUser().getName());
 
@@ -958,7 +956,7 @@ public class ProjectService extends Service {
         final Project project = projectManager.getProject(workspace, path);
         if (project != null) {
             eventService.publish(new ProjectCreatedEvent(project.getWorkspace(), project.getPath()));
-            final String projectType = project.getConfig().getTypeId();
+            final String projectType = project.getConfig().getType();
             logProjectCreatedEvent(path, projectType);
         }
         return Response.created(getServiceContext().getServiceUriBuilder()

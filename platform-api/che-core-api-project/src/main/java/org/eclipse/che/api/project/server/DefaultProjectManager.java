@@ -16,6 +16,7 @@ import org.eclipse.che.api.core.ForbiddenException;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
 import org.eclipse.che.api.core.model.workspace.ModuleConfig;
+import org.eclipse.che.api.core.model.workspace.ProjectConfig;
 import org.eclipse.che.api.core.model.workspace.WorkspaceConfig;
 import org.eclipse.che.api.core.notification.EventService;
 import org.eclipse.che.api.core.notification.EventSubscriber;
@@ -228,7 +229,7 @@ public final class DefaultProjectManager implements ProjectManager {
         final FolderEntry projectFolder = myRoot.createFolder(name);
         final Project project = new Project(projectFolder, this);
 
-        final CreateProjectHandler generator = handlers.getCreateProjectHandler(projectConfig.getTypeId());
+        final CreateProjectHandler generator = handlers.getCreateProjectHandler(projectConfig.getType());
 
         if (generator != null) {
             generator.onCreateProject(project.getBaseFolder(),
@@ -241,7 +242,7 @@ public final class DefaultProjectManager implements ProjectManager {
         misc.setCreationDate(System.currentTimeMillis());
         misc.save(); // Important to save misc!!
 
-        final ProjectCreatedHandler projectCreatedHandler = handlers.getProjectCreatedHandler(projectConfig.getTypeId());
+        final ProjectCreatedHandler projectCreatedHandler = handlers.getProjectCreatedHandler(projectConfig.getType());
         if (projectCreatedHandler != null) {
             projectCreatedHandler.onProjectCreated(project.getBaseFolder());
         }
@@ -266,7 +267,7 @@ public final class DefaultProjectManager implements ProjectManager {
         } else {
             try {
                 ProjectConfig config = project.getConfig();
-                oldProjectType = config.getTypeId();
+                oldProjectType = config.getType();
                 oldMixinTypes = config.getMixinTypes();
             } catch (ProjectTypeConstraintException | ValueStorageException e) {
                 // here we allow changing bad project type on registered
@@ -277,9 +278,9 @@ public final class DefaultProjectManager implements ProjectManager {
         // handle project type changes
         // post actions on changing project type
         // base or mixin
-        if (!newConfig.getTypeId().equals(oldProjectType)) {
+        if (!newConfig.getType().equals(oldProjectType)) {
             ProjectTypeChangedHandler projectTypeChangedHandler = handlers
-                    .getProjectTypeChangedHandler(newConfig.getTypeId());
+                    .getProjectTypeChangedHandler(newConfig.getType());
             if (projectTypeChangedHandler != null) {
                 projectTypeChangedHandler.onProjectTypeChanged(project.getBaseFolder());
             }
@@ -347,16 +348,9 @@ public final class DefaultProjectManager implements ProjectManager {
 
             module = new Project((FolderEntry)moduleFolder, this);
 
-            final Map<String, AttributeValue> valueMap = new HashMap<>();
-            if (moduleConfig.getAttributes() != null) {
-                final Map<String, List<String>> attributes = moduleConfig.getAttributes();
-                for (String key : attributes.keySet()) {
-                    valueMap.put(key, new AttributeValue(attributes.get(key)));
-                }
-            }
             final CreateProjectHandler generator = this.getHandlers().getCreateProjectHandler(moduleConfig.getType());
             if (generator != null) {
-                generator.onCreateProject(module.getBaseFolder(), valueMap, options);
+                generator.onCreateProject(module.getBaseFolder(), moduleConfig.getAttributes(), options);
             }
             final ProjectMisc misc = module.getMisc();
             misc.setCreationDate(System.currentTimeMillis());
@@ -398,7 +392,7 @@ public final class DefaultProjectManager implements ProjectManager {
         ProjectTypes types = new ProjectTypes(project, projectConfigDto.getType(), projectConfigDto.getMixinTypes(), this);
         types.addTransient();
 
-        final Map<String, AttributeValue> attributes = new HashMap<>();
+        final Map<String, List<String>> attributes = new HashMap<>();
 
         for (ProjectType t : types.getAll().values()) {
             for (Attribute attr : t.getAttributes()) {
@@ -424,103 +418,20 @@ public final class DefaultProjectManager implements ProjectManager {
                                     "No Value nor ValueProvider defined for required variable " + var.getId());
                         // else just not add it
                     } else {
-                        attributes.put(var.getName(), new AttributeValue(val));
+                        attributes.put(var.getName(), val);
                     }
                 } else {  // Constant
-                    attributes.put(attr.getName(), attr.getValue());
+                    attributes.put(attr.getName(), attr.getValue().getList());
                 }
             }
         }
 
-        return new ProjectConfig(projectConfigDto.getDescription(), types.getPrimary().getId(), attributes, "", types.mixinIds());
+        return DtoFactory.getInstance().createDto(ProjectConfigDto.class).withDescription(projectConfigDto.getDescription())
+                         .withType(types.getPrimary().getId()).withAttributes(attributes).withMixinTypes(types.mixinIds());
     }
 
     @Override
     public void updateProjectConfig(Project project, ProjectConfig config)
-            throws ServerException, ValueStorageException, ProjectTypeConstraintException, InvalidValueException {
-        final ProjectConfigDto projectConfig = DtoFactory.getInstance().createDto(ProjectConfigDto.class)
-                                                         .withPath(project.getPath())
-                                                         .withName(project.getName())
-                                                         .withSource(DtoFactory.getInstance().createDto(SourceStorageDto.class));
-
-        ProjectTypes types = new ProjectTypes(project, config.getTypeId(), config.getMixinTypes(), this);
-        types.removeTransient();
-
-        projectConfig.setType(types.getPrimary().getId());
-        projectConfig.setDescription(config.getDescription());
-
-        ArrayList<String> ms = new ArrayList<>();
-        ms.addAll(types.getMixins().keySet());
-        projectConfig.setMixinTypes(ms);
-
-        // update attributes
-        HashMap<String, AttributeValue> checkVariables = new HashMap<>();
-        for (String attributeName : config.getAttributes().keySet()) {
-            AttributeValue attributeValue = config.getAttributes().get(attributeName);
-
-            // Try to find definition in all the types
-            Attribute definition = null;
-            for (ProjectType t : types.getAll().values()) {
-                definition = t.getAttribute(attributeName);
-                if (definition != null) {
-                    break;
-                }
-            }
-
-            // initialize provided attributes
-            if (definition != null && definition.isVariable()) {
-                Variable var = (Variable)definition;
-
-                final ValueProviderFactory valueProviderFactory = var.getValueProviderFactory();
-
-                // calculate provided values
-                if (valueProviderFactory != null) {
-                    valueProviderFactory.newInstance(project.getBaseFolder()).setValues(var.getName(), attributeValue.getList());
-                }
-
-                if (attributeValue == null && var.isRequired()) {
-                    throw new ProjectTypeConstraintException("Required attribute value is initialized with null value " + var.getId());
-                }
-
-                // store non-provided values into JSON
-                if (valueProviderFactory == null) {
-                    projectConfig.getAttributes().put(definition.getName(), attributeValue.getList());
-                }
-
-                checkVariables.put(attributeName, attributeValue);
-            }
-        }
-
-        for (ProjectType t : types.getAll().values()) {
-            for (Attribute attr : t.getAttributes()) {
-                if (attr.isVariable()) {
-                    // check if required variables initialized
-//                    if(attr.isRequired() && attr.getValue() == null) {
-                    if (!checkVariables.containsKey(attr.getName()) && attr.isRequired()) {
-                        throw new ProjectTypeConstraintException("Required attribute value is initialized with null value " + attr.getId());
-                    }
-                } else {
-                    // add constants
-                    projectConfig.getAttributes().put(attr.getName(), attr.getValue().getList());
-                }
-            }
-        }
-
-        // TODO: .codenvy folder creation should be removed when all project's meta-info will be stored on Workspace API
-        try {
-            final VirtualFileEntry codenvyDir = project.getBaseFolder().getChild(CODENVY_DIR);
-            if (codenvyDir == null || !codenvyDir.isFolder()) {
-                project.getBaseFolder().createFolder(CODENVY_DIR);
-            }
-        } catch (ForbiddenException | ConflictException e) {
-            throw new ServerException(e.getServiceError());
-        }
-
-        updateProjectInWorkspace(project.getWorkspace(), projectConfig);
-    }
-
-    @Override
-    public void updateProjectConfig(Project project, ProjectConfigImpl config)
             throws ServerException, ValueStorageException, ProjectTypeConstraintException, InvalidValueException {
 
         List<ModuleConfigDto> modules = new ArrayList<>();
@@ -873,18 +784,19 @@ public final class DefaultProjectManager implements ProjectManager {
         final Project project = new Project(projectFolder, this);
 
         // Update config
-        if (projectConfig != null && projectConfig.getTypeId() != null) {
+        if (projectConfig != null && projectConfig.getType() != null) {
             //TODO: need add checking for concurrency attributes name in giving config and in estimation
-            Map<String, AttributeValue> estimateProject = estimateProject(workspace, path, projectConfig.getTypeId());
-            projectConfig.getAttributes().putAll(estimateProject);
+            for (Map.Entry<String, AttributeValue> entry : estimateProject(workspace, path, projectConfig.getType()).entrySet()) {
+                projectConfig.getAttributes().put(entry.getKey(), entry.getValue().getList());
+            }
             project.updateConfig(projectConfig);
         } else {  // try to get config (it will throw exception in case config is not valid)
             project.getConfig();
         }
 
-        if (projectConfig.getTypeId() != null) {
+        if (projectConfig.getType() != null) {
             PostImportProjectHandler postImportProjectHandler =
-                    handlers.getPostImportProjectHandler(projectConfig.getTypeId());
+                    handlers.getPostImportProjectHandler(projectConfig.getType());
             if (postImportProjectHandler != null) {
                 postImportProjectHandler.onProjectImported(project.getBaseFolder());
             }
@@ -963,7 +875,7 @@ public final class DefaultProjectManager implements ProjectManager {
             // In case of project extract some information about project for logger before delete project.
             // remove module only
             if (modulePath != null) {
-                RemoveModuleHandler removeModuleHandler = this.getHandlers().getRemoveModuleHandler(project.getConfig().getTypeId());
+                RemoveModuleHandler removeModuleHandler = this.getHandlers().getRemoveModuleHandler(project.getConfig().getType());
                 if (removeModuleHandler != null) {
                     removeModuleHandler.onRemoveModule(project.getBaseFolder(), modulePath, project.getConfig());
                 }
@@ -979,7 +891,7 @@ public final class DefaultProjectManager implements ProjectManager {
             final String projectName = project.getName();
             String projectType = null;
             try {
-                projectType = project.getConfig().getTypeId();
+                projectType = project.getConfig().getType();
                 deleteProjectFromWorkspace(workspace, project.getName());
             } catch (ServerException | ValueStorageException | ProjectTypeConstraintException e) {
                 // Let delete even project in invalid state.

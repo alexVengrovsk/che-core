@@ -14,6 +14,7 @@ import org.eclipse.che.api.core.ConflictException;
 import org.eclipse.che.api.core.ForbiddenException;
 import org.eclipse.che.api.core.NotFoundException;
 import org.eclipse.che.api.core.ServerException;
+import org.eclipse.che.api.core.model.workspace.ProjectConfig;
 import org.eclipse.che.api.project.server.handlers.GetItemHandler;
 import org.eclipse.che.api.vfs.server.VirtualFile;
 import org.eclipse.che.api.vfs.shared.dto.AccessControlEntry;
@@ -224,7 +225,7 @@ public class Project {
     public VirtualFileEntry getItem(String path) throws ProjectTypeConstraintException,
                                                         ValueStorageException, ServerException, NotFoundException, ForbiddenException {
         final VirtualFileEntry entry = getVirtualFileEntry(path);
-        GetItemHandler handler = manager.getHandlers().getGetItemHandler(getConfig().getTypeId());
+        GetItemHandler handler = manager.getHandlers().getGetItemHandler(getConfig().getType());
         if (handler != null)
             handler.onGetItem(entry);
         return entry;
