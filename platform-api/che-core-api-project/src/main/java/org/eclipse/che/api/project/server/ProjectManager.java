@@ -23,7 +23,6 @@ import org.eclipse.che.api.project.server.type.AttributeValue;
 import org.eclipse.che.api.project.server.type.ProjectTypeRegistry;
 import org.eclipse.che.api.project.shared.dto.SourceEstimation;
 import org.eclipse.che.api.vfs.server.VirtualFileSystemRegistry;
-import org.eclipse.che.api.workspace.server.model.impl.ProjectConfigImpl;
 import org.eclipse.che.api.workspace.shared.dto.ModuleConfigDto;
 
 import java.io.IOException;
@@ -134,6 +133,7 @@ public interface ProjectManager {
                                                                            ValueStorageException,
                                                                            ProjectTypeConstraintException,
                                                                            InvalidValueException;
+
     /**
      * Gets ProjectMisc.
      *
@@ -277,4 +277,12 @@ public interface ProjectManager {
      *         if an error occurs
      */
     boolean isProjectFolder(FolderEntry folder) throws ServerException;
+
+    /**
+     * Tests whether the {@code folder} contains pom.xml.
+     *
+     * @throws ServerException
+     *         if an error occurs
+     */
+    boolean isModuleFolder(FolderEntry folder) throws ServerException;
 }

@@ -81,7 +81,7 @@ public class NodeManager {
         this.nodeIconProvider = nodeIconProvider;
     }
 
-    /** *********** Children operations ********************* */
+    /** ******* Children operations ********************* */
 
     @NotNull
     public Promise<List<Node>> getChildren(@NotNull ItemReference itemReference,
@@ -156,7 +156,7 @@ public class NodeManager {
                     Node node = createNodeByType(itemReference, relProjectDescriptor, nodeSettings);
                     if (node != null) {
                         nodes.add(node);
-                    } else if ("project".equals(itemReference.getType())) {
+                    } else if ("module".equals(itemReference.getType())) {
                         if (modules == null) {
                             modules = new ArrayList<>();
                         }
@@ -177,7 +177,7 @@ public class NodeManager {
                 Promise<?>[] promises = new Promise[modules.size()];
 
                 for (int i = 0; i < promises.length; i++) {
-                    promises[i] = getModule(modules.get(i), collector, nodeSettings);
+//                    promises[i] = getModule(modules.get(i), collector, nodeSettings);
                 }
 
                 return Promises.all(promises).then(new Function<JsArrayMixed, List<Node>>() {
@@ -192,11 +192,20 @@ public class NodeManager {
     }
 
     public Node createNodeByType(ItemReference itemReference, ProjectDescriptor descriptor, NodeSettings settings) {
-        if ("file".equals(itemReference.getType())) {
+        String itemType = itemReference.getType();
+
+        if ("file".equals(itemType)) {
             return nodeFactory.newFileReferenceNode(itemReference, descriptor, settings);
-        } else if ("folder".equals(itemReference.getType())) {
+        }
+
+        if ("folder".equals(itemType)) {
             return nodeFactory.newFolderReferenceNode(itemReference, descriptor, settings);
         }
+
+        if ("module".equals(itemType)) {
+            return nodeFactory.newModuleNode(descriptor, settings);
+        }
+
         return null;
     }
 
@@ -250,7 +259,7 @@ public class NodeManager {
         };
     }
 
-    /** *********** Project Reference operations ********************* */
+    /** ******* Project Reference operations ********************* */
 
     public Promise<ProjectDescriptor> getProjectDescriptor(String path) {
         return AsyncPromiseHelper.createFromAsyncRequest(getProjectDescriptoRC(path));
@@ -307,7 +316,7 @@ public class NodeManager {
         };
     }
 
-    /** *********** Content methods ********************* */
+    /** ******* Content methods ********************* */
 
     @NotNull
     public Promise<String> getContent(@NotNull final VirtualFile virtualFile) {
@@ -342,7 +351,7 @@ public class NodeManager {
         };
     }
 
-    /** *********** Common methods ********************* */
+    /** ******* Common methods ********************* */
 
     @NotNull
     protected <T> AsyncRequestCallback<T> _callback(@NotNull final AsyncCallback<T> callback, @NotNull Unmarshallable<T> u) {

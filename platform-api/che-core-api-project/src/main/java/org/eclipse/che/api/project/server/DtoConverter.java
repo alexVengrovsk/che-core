@@ -12,11 +12,11 @@ package org.eclipse.che.api.project.server;
 
 import org.eclipse.che.api.core.ApiException;
 import org.eclipse.che.api.core.ServerException;
+import org.eclipse.che.api.core.model.workspace.ModuleConfig;
 import org.eclipse.che.api.core.model.workspace.ProjectConfig;
 import org.eclipse.che.api.core.rest.shared.dto.Link;
 import org.eclipse.che.api.core.util.LinksHelper;
 import org.eclipse.che.api.project.server.type.Attribute;
-import org.eclipse.che.api.project.server.type.AttributeValue;
 import org.eclipse.che.api.project.server.type.BaseProjectType;
 import org.eclipse.che.api.project.server.type.ProjectType;
 import org.eclipse.che.api.project.server.type.ProjectTypeRegistry;
@@ -30,7 +30,7 @@ import org.eclipse.che.api.project.shared.dto.ProjectTemplateDescriptor;
 import org.eclipse.che.api.project.shared.dto.ProjectTypeDefinition;
 import org.eclipse.che.api.vfs.shared.dto.AccessControlEntry;
 import org.eclipse.che.api.vfs.shared.dto.Principal;
-import org.eclipse.che.api.workspace.shared.dto.ProjectConfigDto;
+import org.eclipse.che.api.workspace.shared.dto.ModuleConfigDto;
 import org.eclipse.che.api.workspace.shared.dto.SourceStorageDto;
 import org.eclipse.che.commons.env.EnvironmentContext;
 import org.eclipse.che.commons.lang.ws.rs.ExtMediaType;
@@ -40,13 +40,8 @@ import org.eclipse.che.dto.server.DtoFactory;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriBuilder;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import static javax.ws.rs.HttpMethod.DELETE;
@@ -71,7 +66,6 @@ public class DtoConverter {
 
     private DtoConverter() {
     }
-
 
     public static ProjectTypeDefinition toTypeDefinition(ProjectType projectType) {
         final DtoFactory dtoFactory = DtoFactory.getInstance();
@@ -101,8 +95,8 @@ public class DtoConverter {
         definition.setAttributeDescriptors(typeAttributes);
 
         final List<String> parents = projectType.getParents().stream()
-                                                             .map(ProjectType::getId)
-                                                             .collect(Collectors.toList());
+                                                .map(ProjectType::getId)
+                                                .collect(Collectors.toList());
         definition.setParents(parents);
 
         return definition;
@@ -116,9 +110,9 @@ public class DtoConverter {
                                                                   ProjectTemplateDescription projectTemplate,
                                                                   String projectType) {
         final SourceStorageDto importSource = dtoFactory.createDto(SourceStorageDto.class)
-                                                              .withType(projectTemplate.getImporterType())
-                                                              .withLocation(projectTemplate.getLocation())
-                                                              .withParameters(projectTemplate.getParameters());
+                                                        .withType(projectTemplate.getImporterType())
+                                                        .withLocation(projectTemplate.getLocation())
+                                                        .withParameters(projectTemplate.getParameters());
         final ProjectTemplateDescriptor dto = dtoFactory.createDto(ProjectTemplateDescriptor.class)
                                                         .withDisplayName(projectTemplate.getDisplayName())
                                                         .withSource(importSource)
@@ -150,12 +144,14 @@ public class DtoConverter {
                          .withLinks(generateFileLinks(file, uriBuilder));
     }
 
-    public static ItemReference toItemReference(FolderEntry folder, UriBuilder uriBuilder, ProjectManager projectManager)
-            throws ServerException {
+    public static ItemReference toItemReference(FolderEntry folder,
+                                                UriBuilder uriBuilder,
+                                                ProjectManager projectManager) throws ServerException {
         return DtoFactory.getInstance().createDto(ItemReference.class)
                          .withName(folder.getName())
                          .withPath(folder.getPath())
-                         .withType(projectManager.isProjectFolder(folder) ? "project" : "folder")
+                         .withType(projectManager.isProjectFolder(folder) ? "project"
+                                                                          : projectManager.isModuleFolder(folder) ? "module" : "folder")
                          .withMediaType("text/directory")
                          .withAttributes(folder.getAttributes())
                          .withCreated(folder.getCreated())
@@ -188,11 +184,19 @@ public class DtoConverter {
 
         if (config != null) {
             dto.withDescription(config.getDescription());
-            //dto.withRecipe(config.getRecipe());
+            dto.withRecipe(config.getSource().getLocation());
             String typeId = config.getType();
             dto.withType(typeId).withTypeName(ptRegistry.getProjectType(typeId).getDisplayName()).withMixins(config.getMixinTypes());
 
             dto.withAttributes(config.getAttributes());
+
+            List<ModuleConfigDto> modules = new ArrayList<>();
+
+            for (ModuleConfig module : config.getModules()) {
+                modules.add(toModuleConfigDto(module));
+            }
+
+            dto.withModules(modules);
         }
 
         final User currentUser = environmentContext.getUser();
@@ -254,6 +258,24 @@ public class DtoConverter {
         }
 
         return dto;
+    }
+
+    private static ModuleConfigDto toModuleConfigDto(ModuleConfig moduleConfig) {
+        List<ModuleConfigDto> modules = new ArrayList<>();
+
+        for (ModuleConfig config : moduleConfig.getModules()) {
+            modules.add(toModuleConfigDto(config));
+        }
+
+        return DtoFactory.getInstance()
+                         .createDto(ModuleConfigDto.class)
+                         .withName(moduleConfig.getName())
+                         .withType(moduleConfig.getType())
+                         .withPath(moduleConfig.getPath())
+                         .withModules(modules)
+                         .withAttributes(moduleConfig.getAttributes())
+                         .withDescription(moduleConfig.getDescription())
+                         .withMixinTypes(moduleConfig.getMixinTypes());
     }
 
     public static ProjectReference toProjectReference(Project project, UriBuilder uriBuilder) throws InvalidValueException {

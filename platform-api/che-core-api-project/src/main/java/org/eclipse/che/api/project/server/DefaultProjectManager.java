@@ -323,7 +323,6 @@ public final class DefaultProjectManager implements ProjectManager {
         }
 
         parentProject.getModules().add(moduleConfig);
-        updateProjectInWorkspace(workspaceId, parentProject);
 
         if (!projectPath.startsWith("/")) {
             projectPath = "/" + projectPath;
@@ -448,17 +447,9 @@ public final class DefaultProjectManager implements ProjectManager {
             throws ServerException, ValueStorageException, ProjectTypeConstraintException, InvalidValueException {
 
         List<ModuleConfigDto> modules = new ArrayList<>();
-        for (ModuleConfig moduleConfig : config.getModules()) {
-            ModuleConfigDto module = DtoFactory.getInstance()
-                                               .createDto(ModuleConfigDto.class)
-                                               .withName(moduleConfig.getName())
-                                               .withPath(moduleConfig.getPath())
-                                               .withType(moduleConfig.getType())
-                                               .withAttributes(moduleConfig.getAttributes())
-                                               .withDescription(moduleConfig.getDescription())
-                                               .withMixinTypes(moduleConfig.getMixinTypes());
 
-            modules.add(module);
+        for (ModuleConfig moduleConfig : config.getModules()) {
+            getModulesRecursive(moduleConfig, modules);
         }
 
         final ProjectConfigDto projectConfig = DtoFactory.getInstance().createDto(ProjectConfigDto.class)
@@ -541,6 +532,26 @@ public final class DefaultProjectManager implements ProjectManager {
         }
 
         updateProjectInWorkspace(project.getWorkspace(), projectConfig);
+    }
+
+    private void getModulesRecursive(ModuleConfig moduleConfig, List<ModuleConfigDto> projectModules) {
+        List<ModuleConfigDto> modules = new ArrayList<>();
+
+        for (ModuleConfig config : moduleConfig.getModules()) {
+            getModulesRecursive(config, modules);
+        }
+
+        ModuleConfigDto module = DtoFactory.getInstance()
+                                           .createDto(ModuleConfigDto.class)
+                                           .withName(moduleConfig.getName())
+                                           .withPath(moduleConfig.getPath())
+                                           .withType(moduleConfig.getType())
+                                           .withModules(modules)
+                                           .withAttributes(moduleConfig.getAttributes())
+                                           .withDescription(moduleConfig.getDescription())
+                                           .withMixinTypes(moduleConfig.getMixinTypes());
+
+        projectModules.add(module);
     }
 
     private UsersWorkspaceDto getWorkspace(String wsId) throws ServerException {
@@ -944,5 +955,20 @@ public final class DefaultProjectManager implements ProjectManager {
         } catch (ApiException e) {
             throw new ServerException(e);
         }
+    }
+
+    @Override
+    public boolean isModuleFolder(FolderEntry folder) throws ServerException {
+        try {
+            return containsPom(folder);
+        } catch (ApiException e) {
+            throw new ServerException(e);
+        }
+    }
+
+    private boolean containsPom(FolderEntry folderEntry) throws ServerException, ForbiddenException {
+        VirtualFileEntry pom = folderEntry.getChild("pom.xml");
+
+        return pom != null;
     }
 }
