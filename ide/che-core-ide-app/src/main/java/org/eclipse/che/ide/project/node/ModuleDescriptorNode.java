@@ -23,7 +23,7 @@ import org.eclipse.che.ide.api.project.node.Node;
 import org.eclipse.che.ide.api.project.node.resource.DeleteProcessor;
 import org.eclipse.che.ide.api.project.node.resource.RenameProcessor;
 import org.eclipse.che.ide.api.project.node.settings.NodeSettings;
-import org.eclipse.che.ide.project.node.resource.ProjectDescriptorProcessor;
+import org.eclipse.che.ide.project.node.resource.ModuleConfigProcessor;
 import org.eclipse.che.ide.ui.smartTree.presentation.NodePresentation;
 
 import javax.validation.constraints.NotNull;
@@ -34,7 +34,8 @@ import java.util.List;
  */
 public class ModuleDescriptorNode extends ResourceBasedNode<ModuleConfigDto> implements HasStorablePath {
 
-    private final ProjectDescriptorProcessor resourceProcessor;
+    private final ModuleConfigProcessor resourceProcessor;
+    private final ModuleConfigDto       moduleConfigDto;
 
     @Inject
     public ModuleDescriptorNode(@Assisted ModuleConfigDto moduleConfigDto,
@@ -42,15 +43,16 @@ public class ModuleDescriptorNode extends ResourceBasedNode<ModuleConfigDto> imp
                                 @Assisted NodeSettings nodeSettings,
                                 @NotNull EventBus eventBus,
                                 @NotNull NodeManager nodeManager,
-                                @NotNull ProjectDescriptorProcessor resourceProcessor) {
+                                @NotNull ModuleConfigProcessor resourceProcessor) {
         super(moduleConfigDto, projectDescriptor, nodeSettings, eventBus, nodeManager);
         this.resourceProcessor = resourceProcessor;
+        this.moduleConfigDto = moduleConfigDto;
     }
 
     @NotNull
     @Override
     protected Promise<List<Node>> getChildrenImpl() {
-        return nodeManager.getChildren(getProjectDescriptor().getPath() + "/" + getName(), getProjectDescriptor(), getSettings());
+        return nodeManager.getChildren(moduleConfigDto.getPath(), getProjectDescriptor(), getSettings());
     }
 
     @Override
@@ -73,13 +75,13 @@ public class ModuleDescriptorNode extends ResourceBasedNode<ModuleConfigDto> imp
     @Nullable
     @Override
     public DeleteProcessor<ModuleConfigDto> getDeleteProcessor() {
-        return null;
+        return resourceProcessor;
     }
 
     @Nullable
     @Override
     public RenameProcessor<ModuleConfigDto> getRenameProcessor() {
-        return null;
+        return resourceProcessor;
     }
 
     @NotNull

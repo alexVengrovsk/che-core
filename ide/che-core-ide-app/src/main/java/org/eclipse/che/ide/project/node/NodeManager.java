@@ -10,7 +10,6 @@
  *******************************************************************************/
 package org.eclipse.che.ide.project.node;
 
-import com.google.gwt.core.client.JsArrayMixed;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -21,8 +20,6 @@ import org.eclipse.che.api.project.shared.dto.ProjectDescriptor;
 import org.eclipse.che.api.project.shared.dto.ProjectReference;
 import org.eclipse.che.api.promises.client.Function;
 import org.eclipse.che.api.promises.client.FunctionException;
-import org.eclipse.che.api.promises.client.Operation;
-import org.eclipse.che.api.promises.client.OperationException;
 import org.eclipse.che.api.promises.client.Promise;
 import org.eclipse.che.api.promises.client.PromiseError;
 import org.eclipse.che.api.promises.client.callback.AsyncPromiseHelper;
@@ -65,6 +62,8 @@ public class NodeManager {
     protected final DtoFactory             dtoFactory;
     protected final Set<NodeIconProvider>  nodeIconProvider;
 
+    private ModuleDescriptorNode moduleNode;
+
     @Inject
     public NodeManager(NodeFactory nodeFactory,
                        ProjectServiceClient projectService,
@@ -82,7 +81,7 @@ public class NodeManager {
         this.nodeIconProvider = nodeIconProvider;
     }
 
-    /** **** Children operations ********************* */
+    /** Children operations ********************* */
 
     @NotNull
     public Promise<List<Node>> getChildren(@NotNull ItemReference itemReference,
@@ -146,8 +145,6 @@ public class NodeManager {
 
                 final List<Node> nodes = new ArrayList<>(itemRefList.size());
 
-                List<ItemReference> modules = null;
-
                 for (ItemReference itemReference : itemRefList) {
                     //Skip files which starts with "." if enabled
                     if (!nodeSettings.isShowHiddenFiles() && itemReference.getName().startsWith(".")) {
@@ -159,38 +156,9 @@ public class NodeManager {
                         nodes.add(node);
                     }
 
-//                    if ("module".equals(itemReference.getType())) {
-//                        if (modules == null) {
-//                            modules = new ArrayList<>();
-//                        }
-//
-//                        modules.add(itemReference);
-//                    }
-
-                    //NOTE if we want support more type nodes than we should refactor mechanism of hardcoded types for item references
                 }
 
-//                if (modules == null) {
-                    return Promises.resolve(nodes);
-//                }
-
-//                //else we have modules, so we have get them
-//
-//                final List<Node> collector = new ArrayList<>(modules.size());
-//
-//                Promise<?>[] promises = new Promise[modules.size()];
-//
-//                for (int i = 0; i < promises.length; i++) {
-//                    promises[i] = getModule(modules.get(i), collector, nodeSettings);
-//                }
-//
-//                return Promises.all(promises).then(new Function<JsArrayMixed, List<Node>>() {
-//                    @Override
-//                    public List<Node> apply(JsArrayMixed arg) throws FunctionException {
-//                        nodes.addAll(collector);
-//                        return nodes;
-//                    }
-//                });
+                return Promises.resolve(nodes);
             }
         };
     }
@@ -207,15 +175,34 @@ public class NodeManager {
         }
 
         if ("module".equals(itemType)) {
+            moduleNode = null;
+
             for (ModuleConfigDto moduleConfigDto : descriptor.getModules()) {
-                if (itemReference.getName().equals(moduleConfigDto.getName())) {
-                    return nodeFactory.newModuleNode(moduleConfigDto, descriptor, settings);
+                createModuleNode(itemReference, moduleConfigDto, descriptor, settings);
+
+                if (moduleNode != null) {
+                    return moduleNode;
                 }
             }
-
         }
 
         return null;
+    }
+
+    public void createModuleNode(ItemReference itemReference,
+                                 ModuleConfigDto moduleConfigDto,
+                                 ProjectDescriptor descriptor,
+                                 NodeSettings settings) {
+
+        if (itemReference.getName().equals(moduleConfigDto.getName())) {
+            moduleNode = nodeFactory.newModuleNode(moduleConfigDto, descriptor, settings);
+
+            return;
+        }
+
+        for (ModuleConfigDto moduleConfig : moduleConfigDto.getModules()) {
+            createModuleNode(itemReference, moduleConfig, descriptor, settings);
+        }
     }
 
     @NotNull
@@ -228,7 +215,7 @@ public class NodeManager {
         };
     }
 
-    /** **** Project Reference operations ********************* */
+    /** Project Reference operations ********************* */
 
     public Promise<ProjectDescriptor> getProjectDescriptor(String path) {
         return AsyncPromiseHelper.createFromAsyncRequest(getProjectDescriptoRC(path));
@@ -285,7 +272,7 @@ public class NodeManager {
         };
     }
 
-    /** **** Content methods ********************* */
+    /** Content methods ********************* */
 
     @NotNull
     public Promise<String> getContent(@NotNull final VirtualFile virtualFile) {
@@ -320,7 +307,7 @@ public class NodeManager {
         };
     }
 
-    /** **** Common methods ********************* */
+    /** Common methods ********************* */
 
     @NotNull
     protected <T> AsyncRequestCallback<T> _callback(@NotNull final AsyncCallback<T> callback, @NotNull Unmarshallable<T> u) {
