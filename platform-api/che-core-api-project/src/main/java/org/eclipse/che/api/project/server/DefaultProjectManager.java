@@ -438,8 +438,13 @@ public final class DefaultProjectManager implements ProjectManager {
             }
         }
 
-        return DtoFactory.getInstance().createDto(ProjectConfigDto.class).withDescription(projectConfigDto.getDescription())
-                         .withType(types.getPrimary().getId()).withAttributes(attributes).withMixinTypes(types.mixinIds());
+        return DtoFactory.getInstance()
+                         .createDto(ProjectConfigDto.class)
+                         .withDescription(projectConfigDto.getDescription())
+                         .withType(types.getPrimary().getId())
+                         .withAttributes(attributes)
+                         .withMixinTypes(types.mixinIds())
+                         .withModules(projectConfigDto.getModules());
     }
 
     @Override
@@ -815,7 +820,7 @@ public final class DefaultProjectManager implements ProjectManager {
             }
             project.updateConfig(projectConfig);
         } else {  // try to get config (it will throw exception in case config is not valid)
-            project.getConfig();
+            projectConfig = project.getConfig();
         }
 
         if (projectConfig.getType() != null) {

@@ -62,35 +62,36 @@ public class ProjectDescriptorProcessor extends AbstractResourceProcessor<Projec
                     });
                 }
             });
-
-        } else if (node instanceof ModuleDescriptorNode) {
-            Node parent = ((ModuleDescriptorNode)node).getParent();
-            if (!(parent instanceof HasProjectDescriptor)) {
-                return Promises.reject(JsPromiseError.create("Failed to search parent project descriptor"));
-            }
-
-            final String parentPath = ((HasProjectDescriptor)parent).getProjectDescriptor().getPath();
-            final String modulePath = node.getData().getPath();
-
-            final String relPath = modulePath.substring(parentPath.length() + 1);
-
-            return AsyncPromiseHelper.createFromAsyncRequest(new AsyncPromiseHelper.RequestCall<ProjectDescriptor>() {
-                @Override
-                public void makeCall(final AsyncCallback<ProjectDescriptor> callback) {
-                    projectService.deleteModule(parentPath, relPath, new AsyncRequestCallback<Void>() {
-                        @Override
-                        protected void onSuccess(Void result) {
-                            deleteFolder(node, modulePath, callback);
-                        }
-
-                        @Override
-                        protected void onFailure(Throwable exception) {
-                            callback.onFailure(exception);
-                        }
-                    });
-                }
-            });
         }
+
+//        } else if (node instanceof ModuleDescriptorNode) {
+//            Node parent = ((ModuleDescriptorNode)node).getParent();
+//            if (!(parent instanceof HasProjectDescriptor)) {
+//                return Promises.reject(JsPromiseError.create("Failed to search parent project descriptor"));
+//            }
+//
+//            final String parentPath = ((HasProjectDescriptor)parent).getProjectDescriptor().getPath();
+//            final String modulePath = node.getData().getPath();
+//
+//            final String relPath = modulePath.substring(parentPath.length() + 1);
+//
+//            return AsyncPromiseHelper.createFromAsyncRequest(new AsyncPromiseHelper.RequestCall<ProjectDescriptor>() {
+//                @Override
+//                public void makeCall(final AsyncCallback<ProjectDescriptor> callback) {
+//                    projectService.deleteModule(parentPath, relPath, new AsyncRequestCallback<Void>() {
+//                        @Override
+//                        protected void onSuccess(Void result) {
+//                            deleteFolder(node, modulePath, callback);
+//                        }
+//
+//                        @Override
+//                        protected void onFailure(Throwable exception) {
+//                            callback.onFailure(exception);
+//                        }
+//                    });
+//                }
+//            });
+//        }
 
         return Promises.reject(JsPromiseError.create("Internal error"));
     }
@@ -98,36 +99,36 @@ public class ProjectDescriptorProcessor extends AbstractResourceProcessor<Projec
     @Override
     public Promise<ProjectDescriptor> rename(@Nullable final HasStorablePath parent, @NotNull final HasDataObject<ProjectDescriptor> node,
                                              @NotNull final String newName) {
-        if (node instanceof ModuleDescriptorNode) {
-            return AsyncPromiseHelper.createFromAsyncRequest(new AsyncPromiseHelper.RequestCall<ProjectDescriptor>() {
-                @Override
-                public void makeCall(final AsyncCallback<ProjectDescriptor> callback) {
-                    projectService.rename(node.getData().getPath(), newName, null, new AsyncRequestCallback<Void>() {
-                        @Override
-                        protected void onSuccess(Void result) {
-                            String newPath = parent.getStorablePath() + "/" + newName;
-                            projectService.getProject(newPath, new AsyncRequestCallback<ProjectDescriptor>(
-                                    unmarshallerFactory.newUnmarshaller(ProjectDescriptor.class)) {
-                                @Override
-                                protected void onSuccess(ProjectDescriptor result) {
-                                    callback.onSuccess(result);
-                                }
-
-                                @Override
-                                protected void onFailure(Throwable exception) {
-                                    callback.onFailure(exception);
-                                }
-                            });
-                        }
-
-                        @Override
-                        protected void onFailure(Throwable exception) {
-                            callback.onFailure(exception);
-                        }
-                    });
-                }
-            });
-        }
+////        if (node instanceof ModuleDescriptorNode) {
+////            return AsyncPromiseHelper.createFromAsyncRequest(new AsyncPromiseHelper.RequestCall<ProjectDescriptor>() {
+////                @Override
+////                public void makeCall(final AsyncCallback<ProjectDescriptor> callback) {
+////                    projectService.rename(node.getData().getPath(), newName, null, new AsyncRequestCallback<Void>() {
+////                        @Override
+////                        protected void onSuccess(Void result) {
+////                            String newPath = parent.getStorablePath() + "/" + newName;
+////                            projectService.getProject(newPath, new AsyncRequestCallback<ProjectDescriptor>(
+////                                    unmarshallerFactory.newUnmarshaller(ProjectDescriptor.class)) {
+////                                @Override
+////                                protected void onSuccess(ProjectDescriptor result) {
+////                                    callback.onSuccess(result);
+////                                }
+////
+////                                @Override
+////                                protected void onFailure(Throwable exception) {
+////                                    callback.onFailure(exception);
+////                                }
+////                            });
+////                        }
+////
+////                        @Override
+////                        protected void onFailure(Throwable exception) {
+////                            callback.onFailure(exception);
+////                        }
+////                    });
+////                }
+////            });
+//        }
 
         return Promises.reject(JsPromiseError.create(""));
     }

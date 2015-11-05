@@ -24,6 +24,7 @@ import org.eclipse.che.api.project.server.type.ProjectTypeRegistry;
 import org.eclipse.che.api.project.shared.dto.SourceEstimation;
 import org.eclipse.che.api.vfs.server.VirtualFileSystemRegistry;
 import org.eclipse.che.api.workspace.shared.dto.ModuleConfigDto;
+import org.eclipse.che.api.workspace.shared.dto.ProjectConfigDto;
 
 import java.io.IOException;
 import java.util.List;
@@ -231,7 +232,6 @@ public interface ProjectManager {
      *
      * @param workspace
      * @param projectConfig
-     * @return
      * @throws ConflictException
      * @throws ForbiddenException
      * @throws ServerException

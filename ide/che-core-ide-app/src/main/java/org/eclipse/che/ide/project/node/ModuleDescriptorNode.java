@@ -16,6 +16,7 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import org.eclipse.che.api.project.shared.dto.ProjectDescriptor;
 import org.eclipse.che.api.promises.client.Promise;
+import org.eclipse.che.api.workspace.shared.dto.ModuleConfigDto;
 import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.ide.api.project.node.HasStorablePath;
 import org.eclipse.che.ide.api.project.node.Node;
@@ -31,24 +32,25 @@ import java.util.List;
 /**
  * @author Vlad Zhukovskiy
  */
-public class ModuleDescriptorNode extends ResourceBasedNode<ProjectDescriptor> implements HasStorablePath {
+public class ModuleDescriptorNode extends ResourceBasedNode<ModuleConfigDto> implements HasStorablePath {
 
     private final ProjectDescriptorProcessor resourceProcessor;
 
     @Inject
-    public ModuleDescriptorNode(@Assisted ProjectDescriptor projectDescriptor,
+    public ModuleDescriptorNode(@Assisted ModuleConfigDto moduleConfigDto,
+                                @Assisted ProjectDescriptor projectDescriptor,
                                 @Assisted NodeSettings nodeSettings,
                                 @NotNull EventBus eventBus,
                                 @NotNull NodeManager nodeManager,
                                 @NotNull ProjectDescriptorProcessor resourceProcessor) {
-        super(projectDescriptor, projectDescriptor, nodeSettings, eventBus, nodeManager);
+        super(moduleConfigDto, projectDescriptor, nodeSettings, eventBus, nodeManager);
         this.resourceProcessor = resourceProcessor;
     }
 
     @NotNull
     @Override
     protected Promise<List<Node>> getChildrenImpl() {
-        return nodeManager.getChildren(getData(), getSettings());
+        return nodeManager.getChildren(getProjectDescriptor().getPath() + "/" + getName(), getProjectDescriptor(), getSettings());
     }
 
     @Override
@@ -70,14 +72,14 @@ public class ModuleDescriptorNode extends ResourceBasedNode<ProjectDescriptor> i
 
     @Nullable
     @Override
-    public DeleteProcessor<ProjectDescriptor> getDeleteProcessor() {
-        return resourceProcessor;
+    public DeleteProcessor<ModuleConfigDto> getDeleteProcessor() {
+        return null;
     }
 
     @Nullable
     @Override
-    public RenameProcessor<ProjectDescriptor> getRenameProcessor() {
-        return resourceProcessor;
+    public RenameProcessor<ModuleConfigDto> getRenameProcessor() {
+        return null;
     }
 
     @NotNull

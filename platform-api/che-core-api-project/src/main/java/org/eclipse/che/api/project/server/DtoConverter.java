@@ -184,7 +184,7 @@ public class DtoConverter {
 
         if (config != null) {
             dto.withDescription(config.getDescription());
-            dto.withRecipe(config.getSource().getLocation());
+//            dto.withRecipe(config.getSource().getLocation());
             String typeId = config.getType();
             dto.withType(typeId).withTypeName(ptRegistry.getProjectType(typeId).getDisplayName()).withMixins(config.getMixinTypes());
 

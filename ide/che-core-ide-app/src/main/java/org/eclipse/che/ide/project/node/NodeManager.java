@@ -28,6 +28,7 @@ import org.eclipse.che.api.promises.client.PromiseError;
 import org.eclipse.che.api.promises.client.callback.AsyncPromiseHelper;
 import org.eclipse.che.api.promises.client.callback.AsyncPromiseHelper.RequestCall;
 import org.eclipse.che.api.promises.client.js.Promises;
+import org.eclipse.che.api.workspace.shared.dto.ModuleConfigDto;
 import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.ide.api.project.node.Node;
 import org.eclipse.che.ide.api.project.node.settings.NodeSettings;
@@ -81,7 +82,7 @@ public class NodeManager {
         this.nodeIconProvider = nodeIconProvider;
     }
 
-    /** ******* Children operations ********************* */
+    /** **** Children operations ********************* */
 
     @NotNull
     public Promise<List<Node>> getChildren(@NotNull ItemReference itemReference,
@@ -156,37 +157,40 @@ public class NodeManager {
                     Node node = createNodeByType(itemReference, relProjectDescriptor, nodeSettings);
                     if (node != null) {
                         nodes.add(node);
-                    } else if ("module".equals(itemReference.getType())) {
-                        if (modules == null) {
-                            modules = new ArrayList<>();
-                        }
-                        modules.add(itemReference);
                     }
+
+//                    if ("module".equals(itemReference.getType())) {
+//                        if (modules == null) {
+//                            modules = new ArrayList<>();
+//                        }
+//
+//                        modules.add(itemReference);
+//                    }
 
                     //NOTE if we want support more type nodes than we should refactor mechanism of hardcoded types for item references
                 }
 
-                if (modules == null) {
+//                if (modules == null) {
                     return Promises.resolve(nodes);
-                }
+//                }
 
-                //else we have modules, so we have get them
-
-                final List<Node> collector = new ArrayList<>(modules.size());
-
-                Promise<?>[] promises = new Promise[modules.size()];
-
-                for (int i = 0; i < promises.length; i++) {
+//                //else we have modules, so we have get them
+//
+//                final List<Node> collector = new ArrayList<>(modules.size());
+//
+//                Promise<?>[] promises = new Promise[modules.size()];
+//
+//                for (int i = 0; i < promises.length; i++) {
 //                    promises[i] = getModule(modules.get(i), collector, nodeSettings);
-                }
-
-                return Promises.all(promises).then(new Function<JsArrayMixed, List<Node>>() {
-                    @Override
-                    public List<Node> apply(JsArrayMixed arg) throws FunctionException {
-                        nodes.addAll(collector);
-                        return nodes;
-                    }
-                });
+//                }
+//
+//                return Promises.all(promises).then(new Function<JsArrayMixed, List<Node>>() {
+//                    @Override
+//                    public List<Node> apply(JsArrayMixed arg) throws FunctionException {
+//                        nodes.addAll(collector);
+//                        return nodes;
+//                    }
+//                });
             }
         };
     }
@@ -203,50 +207,15 @@ public class NodeManager {
         }
 
         if ("module".equals(itemType)) {
-            return nodeFactory.newModuleNode(descriptor, settings);
+            for (ModuleConfigDto moduleConfigDto : descriptor.getModules()) {
+                if (itemReference.getName().equals(moduleConfigDto.getName())) {
+                    return nodeFactory.newModuleNode(moduleConfigDto, descriptor, settings);
+                }
+            }
+
         }
 
         return null;
-    }
-
-    private Promise<Node> getModule(ItemReference module, List<Node> collector, NodeSettings nodeSettings) {
-        return AsyncPromiseHelper.createFromAsyncRequest(getModuleRC(module))
-                                 .then(createModuleNode(nodeSettings))
-                                 .then(_collectNodesFromPromises(collector));
-    }
-
-    private RequestCall<ProjectDescriptor> getModuleRC(final ItemReference module) {
-        return new RequestCall<ProjectDescriptor>() {
-            @Override
-            public void makeCall(AsyncCallback<ProjectDescriptor> callback) {
-                projectService
-                        .getProject(module.getPath(), _callback(callback, dtoUnmarshaller.newUnmarshaller(ProjectDescriptor.class)));
-            }
-        };
-    }
-
-    private Function<ProjectDescriptor, Node> createModuleNode(final NodeSettings nodeSettings) {
-        return new Function<ProjectDescriptor, Node>() {
-            @Override
-            public Node apply(ProjectDescriptor module) throws FunctionException {
-                //Skip files which starts with "." if enabled
-//                if (!nodeSettings.isShowHiddenFiles() && module.getName().startsWith(".")) {
-//                    continue;
-//                }
-
-                return nodeFactory.newModuleNode(module, nodeSettings);
-            }
-        };
-    }
-
-    @NotNull
-    private Operation<Node> _collectNodesFromPromises(@NotNull final List<Node> collector) {
-        return new Operation<Node>() {
-            @Override
-            public void apply(Node nodes) throws OperationException {
-                collector.add(nodes);
-            }
-        };
     }
 
     @NotNull
@@ -259,7 +228,7 @@ public class NodeManager {
         };
     }
 
-    /** ******* Project Reference operations ********************* */
+    /** **** Project Reference operations ********************* */
 
     public Promise<ProjectDescriptor> getProjectDescriptor(String path) {
         return AsyncPromiseHelper.createFromAsyncRequest(getProjectDescriptoRC(path));
@@ -316,7 +285,7 @@ public class NodeManager {
         };
     }
 
-    /** ******* Content methods ********************* */
+    /** **** Content methods ********************* */
 
     @NotNull
     public Promise<String> getContent(@NotNull final VirtualFile virtualFile) {
@@ -351,7 +320,7 @@ public class NodeManager {
         };
     }
 
-    /** ******* Common methods ********************* */
+    /** **** Common methods ********************* */
 
     @NotNull
     protected <T> AsyncRequestCallback<T> _callback(@NotNull final AsyncCallback<T> callback, @NotNull Unmarshallable<T> u) {
