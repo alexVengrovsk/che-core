@@ -296,6 +296,8 @@ public class WorkspaceComponent implements Component, ExtServerStateHandler {
                                                      workspace.getDefaultEnvName()).then(new Operation<UsersWorkspaceDto>() {
                         @Override
                         public void apply(UsersWorkspaceDto workspace) throws OperationException {
+                            initialLoadingInfo.setOperationStatus(WORKSPACE_BOOTING.getValue(), SUCCESS);
+                            setCurrentWorkspace(workspace);
                             List<MachineStateDto> machineStates = workspace.getEnvironments()
                                                                            .get(workspace.getDefaultEnvName()).getMachineConfigs();
 
@@ -422,7 +424,6 @@ public class WorkspaceComponent implements Component, ExtServerStateHandler {
     private void onMachineStatusChanged(MachineStatusEvent event) {
         switch (event.getEventType()) {
             case RUNNING:
-                initialLoadingInfo.setOperationStatus(WORKSPACE_BOOTING.getValue(), SUCCESS);
                 initialLoadingInfo.setOperationStatus(MACHINE_BOOTING.getValue(), SUCCESS);
 
                 eventBus.fireEvent(new DevMachineStateEvent(event));
