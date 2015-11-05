@@ -289,12 +289,10 @@ public class Project {
                 return modules;
             }
 
-            try {
-                BufferedReader in = new BufferedReader(new InputStreamReader(((FileEntry)file).getInputStream()));
+            try (BufferedReader in = new BufferedReader(new InputStreamReader(((FileEntry)file).getInputStream()))) {
                 while (in.ready()) {
                     modules.add(in.readLine());
                 }
-                in.close();
             } catch (IOException e) {
                 throw new ServerException(e);
             }
@@ -303,11 +301,10 @@ public class Project {
         }
 
         private void write(Set<String> modules) throws ForbiddenException, ServerException, ConflictException {
-            VirtualFileEntry file;
-            file = baseFolder.getChild(MODULES_PATH);
+            VirtualFileEntry file = baseFolder.getChild(MODULES_PATH);
 
             if (file == null && !modules.isEmpty()) {
-                file = ((FolderEntry)baseFolder.getChild(CODENVY_DIR)).createFile("modules", new byte[0], MediaType.TEXT_PLAIN);
+                file = ((FolderEntry)baseFolder.getChild(".codenvy")).createFile("modules", new byte[0], MediaType.TEXT_PLAIN);
             }
 
             String all = "";
@@ -315,7 +312,9 @@ public class Project {
                 all += (path + "\n");
             }
 
-            ((FileEntry)file).updateContent(all.getBytes());
+            if (file != null) {
+                ((FileEntry)file).updateContent(all.getBytes());
+            }
         }
     }
 }
