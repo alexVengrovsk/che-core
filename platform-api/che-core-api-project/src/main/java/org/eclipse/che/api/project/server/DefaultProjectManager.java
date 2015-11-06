@@ -42,7 +42,6 @@ import org.eclipse.che.api.vfs.server.VirtualFileSystemRegistry;
 import org.eclipse.che.api.vfs.server.observation.VirtualFileEvent;
 import org.eclipse.che.api.workspace.server.DtoConverter;
 import org.eclipse.che.api.workspace.server.WorkspaceService;
-import org.eclipse.che.api.workspace.server.model.impl.ProjectConfigImpl;
 import org.eclipse.che.api.workspace.shared.dto.ModuleConfigDto;
 import org.eclipse.che.api.workspace.shared.dto.ProjectConfigDto;
 import org.eclipse.che.api.workspace.shared.dto.SourceStorageDto;
@@ -715,12 +714,15 @@ public final class DefaultProjectManager implements ProjectManager {
     }
 
     @Override
-    public List<ModuleConfig> getProjectModules(Project parent)
+    public List<? extends ModuleConfig> getProjectModules(Project parent)
             throws ServerException, ForbiddenException, ConflictException, IOException, NotFoundException {
 
         final ProjectConfigDto project = getProjectFromWorkspace(parent.getWorkspace(), parent.getPath());
-        ProjectConfigImpl projectConfig = new ProjectConfigImpl(project);
-        return projectConfig.getModules();
+        List<ModuleConfigDto> result = new ArrayList<>();
+        for (ModuleConfig moduleConfig : project.getModules()) {
+            getModulesRecursive(moduleConfig, result);
+        }
+        return result;
     }
 
     @Override
@@ -968,6 +970,7 @@ public final class DefaultProjectManager implements ProjectManager {
         } catch (ApiException e) {
             throw new ServerException(e);
         }
+
     }
 
     private boolean containsPom(FolderEntry folderEntry) throws ServerException, ForbiddenException {

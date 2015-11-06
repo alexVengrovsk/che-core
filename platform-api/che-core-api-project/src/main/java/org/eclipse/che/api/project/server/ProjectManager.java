@@ -173,7 +173,7 @@ public interface ProjectManager {
      * @throws ForbiddenException
      *         if user which perform operation doesn't have required permissions
      */
-    List<ModuleConfig> getProjectModules(Project project)
+    List<? extends ModuleConfig> getProjectModules(Project project)
             throws ServerException, ForbiddenException, ConflictException, IOException, NotFoundException;
 
     /**

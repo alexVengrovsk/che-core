@@ -304,31 +304,25 @@ public class ProjectServiceTest {
 
         Project myProject = pm.getProject(workspace, "my_project");
 
-        ProjectConfig config = DtoFactory.getInstance().createDto(ProjectConfigDto.class).withDescription("my test module").withType(
-                pt.getId());
-
-        FolderEntry moduleFolder = myProject.getBaseFolder().createFolder("my_module");
-        Project module = new Project(moduleFolder, pm);
-        module.updateConfig(config);
+        myProject.getBaseFolder().createFolder("my_module");
         myProject.getModules().add("my_module");
 
-        final ProjectConfigDto moduleConfig = DtoFactory.getInstance().createDto(ProjectConfigDto.class)
+        final ModuleConfigDto moduleConfig = DtoFactory.getInstance().createDto(ModuleConfigDto.class)
                                                         .withPath("/my_project/my_module")
                                                         .withName("my_module")
                                                         .withDescription("my test module")
-                                                        .withType("testGetModules")
-                                                        .withSource(DtoFactory.getInstance().createDto(SourceStorageDto.class));
+                                                        .withType("testGetModules");
         modules.add(moduleConfig);
 
         ContainerResponse response = launcher.service(GET,
                                                       String.format("http://localhost:8080/api/project/%s/modules/my_project", workspace),
                                                       "http://localhost:8080/api", null, null, null);
         assertEquals(response.getStatus(), 200, "Error: " + response.getEntity());
-        List<ProjectConfigDto> result = (List<ProjectConfigDto>)response.getEntity();
+        List<ModuleConfigDto> result = (List<ModuleConfigDto>)response.getEntity();
         assertNotNull(result);
 
         assertEquals(result.size(), 1);
-        org.eclipse.che.api.core.model.workspace.ProjectConfig moduleDescriptor = result.get(0);
+        ModuleConfigDto moduleDescriptor = result.get(0);
         assertEquals(moduleDescriptor.getDescription(), "my test module");
         assertEquals(moduleDescriptor.getType(), "testGetModules");
         assertEquals(moduleDescriptor.getName(), "my_module");
@@ -359,19 +353,11 @@ public class ProjectServiceTest {
 
         Project myProject = pm.getProject(workspace, "my_project");
 
-        ProjectConfig config = DtoFactory.getInstance().createDto(ProjectConfigDto.class).withDescription("my test module").withType(
-                pt.getId());
-
-
-        FolderEntry moduleFolder = myProject.getBaseFolder().createFolder("my_module");
-        Project module = new Project(moduleFolder, pm);
-        module.updateConfig(config);
+        myProject.getBaseFolder().createFolder("my_module");
         myProject.getModules().add("my_module");
 
         //create other module but not add to modules should be added to response by handler
-        final FolderEntry moduleFolder2 = myProject.getBaseFolder().createFolder("my_module2");
-        Project module2 = new Project(moduleFolder2, pm);
-        module2.updateConfig(config);
+        myProject.getBaseFolder().createFolder("my_module2");
 
         phRegistry.register(new GetModulesHandler() {
             @Override
@@ -408,14 +394,14 @@ public class ProjectServiceTest {
                                                       String.format("http://localhost:8080/api/project/%s/modules/my_project", workspace),
                                                       "http://localhost:8080/api", null, null, null);
         assertEquals(response.getStatus(), 200, "Error: " + response.getEntity());
-        List<ProjectConfigDto> result = (List<ProjectConfigDto>)response.getEntity();
+        List<ModuleConfigDto> result = (List<ModuleConfigDto>)response.getEntity();
         assertNotNull(result);
 
         assertEquals(result.size(), 2);
-        ProjectConfigDto moduleDescriptor = result.get(0);
+        ModuleConfigDto moduleDescriptor = result.get(0);
         assertEquals(moduleDescriptor.getName(), "my_module");
 
-        ProjectConfigDto moduleDescriptor2 = result.get(1);
+        ModuleConfigDto moduleDescriptor2 = result.get(1);
         assertEquals(moduleDescriptor2.getName(), "my_module2");
     }
 
@@ -608,7 +594,7 @@ public class ProjectServiceTest {
         assertNotNull(project.getBaseFolder().getChild("test.txt"));
     }
 
-//    @Test
+    @Test
     public void testCreateModule() throws Exception {
         phRegistry.register(new CreateProjectHandler() {
 

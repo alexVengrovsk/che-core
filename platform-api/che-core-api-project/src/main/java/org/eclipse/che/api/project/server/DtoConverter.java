@@ -190,11 +190,7 @@ public class DtoConverter {
 
             dto.withAttributes(config.getAttributes());
 
-            List<ModuleConfigDto> modules = new ArrayList<>();
-
-            for (ModuleConfig module : config.getModules()) {
-                modules.add(toModuleConfigDto(module));
-            }
+            List<ModuleConfigDto> modules = config.getModules().stream().map(DtoConverter::toModuleConfigDto).collect(Collectors.toList());
 
             dto.withModules(modules);
         }
@@ -261,11 +257,8 @@ public class DtoConverter {
     }
 
     private static ModuleConfigDto toModuleConfigDto(ModuleConfig moduleConfig) {
-        List<ModuleConfigDto> modules = new ArrayList<>();
-
-        for (ModuleConfig config : moduleConfig.getModules()) {
-            modules.add(toModuleConfigDto(config));
-        }
+        List<ModuleConfigDto> modules =
+                moduleConfig.getModules().stream().map(DtoConverter::toModuleConfigDto).collect(Collectors.toList());
 
         return DtoFactory.getInstance()
                          .createDto(ModuleConfigDto.class)
