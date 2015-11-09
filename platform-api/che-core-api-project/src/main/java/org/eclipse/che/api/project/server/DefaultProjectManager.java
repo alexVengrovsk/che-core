@@ -62,6 +62,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 import javax.ws.rs.core.UriBuilder;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -967,7 +968,7 @@ public final class DefaultProjectManager implements ProjectManager {
 
     @Override
     public boolean isModuleFolder(FolderEntry folder) throws ServerException {
-        String [] parts = folder.getPath().split("(?=[\\\\])");
+        String [] parts = folder.getPath().split("(?=[" + File.separator + "])");
         ModuleConfig tmp = getProjectFromWorkspace(folder.getWorkspace(), parts[0]);
         if (tmp != null) {
             StringBuilder strBuilder = new StringBuilder(parts[0]);
