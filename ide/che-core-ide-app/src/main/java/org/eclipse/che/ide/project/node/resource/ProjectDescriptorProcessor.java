@@ -16,6 +16,8 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import org.eclipse.che.api.project.gwt.client.ProjectServiceClient;
 import org.eclipse.che.api.project.shared.dto.ProjectDescriptor;
+import org.eclipse.che.api.promises.client.Function;
+import org.eclipse.che.api.promises.client.FunctionException;
 import org.eclipse.che.api.promises.client.Promise;
 import org.eclipse.che.api.promises.client.callback.AsyncPromiseHelper;
 import org.eclipse.che.api.promises.client.js.JsPromiseError;
@@ -25,10 +27,12 @@ import org.eclipse.che.ide.api.event.project.DeleteProjectEvent;
 import org.eclipse.che.ide.api.project.node.HasDataObject;
 import org.eclipse.che.ide.api.project.node.HasStorablePath;
 import org.eclipse.che.ide.project.node.ProjectDescriptorNode;
-import org.eclipse.che.ide.rest.AsyncRequestCallback;
 import org.eclipse.che.ide.rest.DtoUnmarshallerFactory;
 
 import javax.validation.constraints.NotNull;
+
+import static org.eclipse.che.api.promises.client.callback.PromiseHelper.newCallback;
+import static org.eclipse.che.api.promises.client.callback.PromiseHelper.newPromise;
 
 /**
  * @author Vlad Zhukovskiy
@@ -43,20 +47,43 @@ public class ProjectDescriptorProcessor extends AbstractResourceProcessor<Projec
     @Override
     public Promise<ProjectDescriptor> delete(@NotNull final HasDataObject<ProjectDescriptor> node) {
         if (node instanceof ProjectDescriptorNode) {
-            return AsyncPromiseHelper.createFromAsyncRequest(new AsyncPromiseHelper.RequestCall<ProjectDescriptor>() {
+            return newPromise(new AsyncPromiseHelper.RequestCall<Void>() {
                 @Override
-                public void makeCall(final AsyncCallback<ProjectDescriptor> callback) {
-                    projectService.delete(node.getData().getPath(), new AsyncRequestCallback<Void>() {
-                        @Override
-                        protected void onSuccess(Void result) {
-                            eventBus.fireEvent(new DeleteProjectEvent(((ProjectDescriptorNode)node).getProjectDescriptor()));
-                        }
+                public void makeCall(AsyncCallback<Void> callback) {
+                    projectService.delete(node.getData().getPath(), newCallback(callback));
+                }
+            }).then(new Function<Void, ProjectDescriptor>() {
+                @Override
+                public ProjectDescriptor apply(Void arg) throws FunctionException {
+                    eventBus.fireEvent(new DeleteProjectEvent(((ProjectDescriptorNode)node).getProjectDescriptor()));
+                    return node.getData();
+                }
+            });
+        } else if (node instanceof ModuleDescriptorNode) {
+            Node parent = ((ModuleDescriptorNode)node).getParent();
+            if (!(parent instanceof HasProjectDescriptor)) {
+                return Promises.reject(JsPromiseError.create("Failed to search parent project descriptor"));
+            }
 
-                        @Override
-                        protected void onFailure(Throwable exception) {
-                            callback.onFailure(exception);
-                        }
-                    });
+            final String parentPath = ((HasProjectDescriptor)parent).getProjectDescriptor().getPath();
+            final String modulePath = node.getData().getPath();
+
+            final String relPath = modulePath.substring(parentPath.length() + 1);
+
+            return newPromise(new AsyncPromiseHelper.RequestCall<Void>() {
+                @Override
+                public void makeCall(AsyncCallback<Void> callback) {
+                    projectService.deleteModule(parentPath, relPath, newCallback(callback));
+                }
+            }).then(newPromise(new AsyncPromiseHelper.RequestCall<Void>() {
+                @Override
+                public void makeCall(AsyncCallback<Void> callback) {
+                    projectService.delete(modulePath, newCallback(callback));
+                }
+            })).then(new Function<Void, ProjectDescriptor>() {
+                @Override
+                public ProjectDescriptor apply(Void arg) throws FunctionException {
+                    return node.getData();
                 }
             });
         }
@@ -67,20 +94,22 @@ public class ProjectDescriptorProcessor extends AbstractResourceProcessor<Projec
     @Override
     public Promise<ProjectDescriptor> rename(@Nullable final HasStorablePath parent, @NotNull final HasDataObject<ProjectDescriptor> node,
                                              @NotNull final String newName) {
+        if (node instanceof ModuleDescriptorNode) {
+
+            return newPromise(new AsyncPromiseHelper.RequestCall<Void>() {
+                @Override
+                public void makeCall(AsyncCallback<Void> callback) {
+                    projectService.rename(node.getData().getPath(), newName, null, newCallback(callback));
+                }
+            }).then(newPromise(new AsyncPromiseHelper.RequestCall<ProjectDescriptor>() {
+                @Override
+                public void makeCall(AsyncCallback<ProjectDescriptor> callback) {
+                    projectService.getProject(parent.getStorablePath() + "/" + newName, newCallback(callback, unmarshallerFactory.newUnmarshaller(
+                            ProjectDescriptor.class)));
+                }
+            }));
+        }
+
         return Promises.reject(JsPromiseError.create(""));
-    }
-
-    private void deleteFolder(final HasDataObject<ProjectDescriptor> node, String path, final AsyncCallback<ProjectDescriptor> callback) {
-        projectService.delete(path, new AsyncRequestCallback<Void>() {
-            @Override
-            protected void onSuccess(Void result) {
-                callback.onSuccess(node.getData());
-            }
-
-            @Override
-            protected void onFailure(Throwable exception) {
-                callback.onFailure(exception);
-            }
-        });
     }
 }

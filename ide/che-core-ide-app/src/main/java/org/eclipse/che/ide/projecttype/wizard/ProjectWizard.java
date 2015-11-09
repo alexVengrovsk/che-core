@@ -24,6 +24,7 @@ import org.eclipse.che.ide.api.app.AppContext;
 import org.eclipse.che.ide.api.event.ModuleCreatedEvent;
 import org.eclipse.che.ide.api.event.project.CreateProjectEvent;
 import org.eclipse.che.ide.api.event.project.OpenProjectEvent;
+import org.eclipse.che.ide.api.event.project.ProjectUpdatedEvent;
 import org.eclipse.che.ide.api.project.type.wizard.ProjectWizardMode;
 import org.eclipse.che.ide.api.wizard.AbstractWizard;
 import org.eclipse.che.ide.dto.DtoFactory;
@@ -220,8 +221,7 @@ public class ProjectWizard extends AbstractWizard<ProjectConfigDto> {
         projectServiceClient.updateProject(dataObject.getName(), dataObject, new AsyncRequestCallback<ProjectDescriptor>(unmarshaller) {
             @Override
             protected void onSuccess(ProjectDescriptor result) {
-                // just re-open project if it's already opened
-                eventBus.fireEvent(new OpenProjectEvent(result));
+                eventBus.fireEvent(new ProjectUpdatedEvent(context.get(PROJECT_PATH_KEY), result));
                 callback.onCompleted();
             }
 

@@ -143,7 +143,6 @@ public class ImportWizard extends AbstractWizard<ProjectConfigDto> {
         });
     }
 
-
     private void resolveProject(final CompleteCallback callback) {
         final String projectName = dataObject.getName();
         Unmarshallable<List<SourceEstimation>> unmarshaller = dtoUnmarshallerFactory.newListUnmarshaller(SourceEstimation.class);
