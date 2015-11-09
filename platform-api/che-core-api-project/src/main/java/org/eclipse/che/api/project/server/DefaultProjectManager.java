@@ -65,10 +65,12 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.locks.Lock;
@@ -718,7 +720,7 @@ public final class DefaultProjectManager implements ProjectManager {
             throws ServerException, ForbiddenException, ConflictException, IOException, NotFoundException {
 
         final ProjectConfigDto project = getProjectFromWorkspace(parent.getWorkspace(), parent.getPath());
-        List<ModuleConfigDto> result = new ArrayList<>();
+        List<ModuleConfig> result = new ArrayList<>();
         for (ModuleConfig moduleConfig : project.getModules()) {
             getModulesRecursive(moduleConfig, result);
         }
@@ -965,17 +967,27 @@ public final class DefaultProjectManager implements ProjectManager {
 
     @Override
     public boolean isModuleFolder(FolderEntry folder) throws ServerException {
-        try {
-            return containsPom(folder);
-        } catch (ApiException e) {
-            throw new ServerException(e);
+        String [] parts = folder.getPath().split("(?=[\\\\])");
+        ModuleConfig tmp = getProjectFromWorkspace(folder.getWorkspace(), parts[0]);
+        if (tmp != null) {
+            StringBuilder strBuilder = new StringBuilder(parts[0]);
+            for (int i = 1; i < parts.length; i++) {
+                strBuilder.append(parts[i]);
+                Optional<? extends  ModuleConfig> optional = findModuleWithPath(tmp, strBuilder.toString());
+                if (optional.isPresent()) {
+                    tmp = optional.get();
+                    continue;
+                } else {
+                    return  false;
+                }
+            }
+            return true;
         }
-
+        return false;
     }
 
-    private boolean containsPom(FolderEntry folderEntry) throws ServerException, ForbiddenException {
-        VirtualFileEntry pom = folderEntry.getChild("pom.xml");
-
-        return pom != null;
+    private Optional<? extends ModuleConfig> findModuleWithPath(ModuleConfig parent, String modulePath) {
+        return parent.getModules().stream().filter(module -> module.getPath().equals(modulePath)).findAny();
     }
+
 }
