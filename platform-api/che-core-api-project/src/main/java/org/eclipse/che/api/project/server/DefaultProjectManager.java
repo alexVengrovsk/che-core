@@ -720,7 +720,7 @@ public final class DefaultProjectManager implements ProjectManager {
             throws ServerException, ForbiddenException, ConflictException, IOException, NotFoundException {
 
         final ProjectConfigDto project = getProjectFromWorkspace(parent.getWorkspace(), parent.getPath());
-        List<ModuleConfig> result = new ArrayList<>();
+        List<ModuleConfigDto> result = new ArrayList<>();
         for (ModuleConfig moduleConfig : project.getModules()) {
             getModulesRecursive(moduleConfig, result);
         }
