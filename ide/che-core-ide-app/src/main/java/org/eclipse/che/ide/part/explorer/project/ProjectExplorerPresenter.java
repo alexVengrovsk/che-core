@@ -24,12 +24,12 @@ import org.eclipse.che.api.project.gwt.client.ProjectServiceClient;
 import org.eclipse.che.api.project.shared.Constants;
 import org.eclipse.che.api.project.shared.dto.ItemReference;
 import org.eclipse.che.api.project.shared.dto.ProjectDescriptor;
-import org.eclipse.che.api.project.shared.dto.ProjectUpdate;
 import org.eclipse.che.api.promises.client.Operation;
 import org.eclipse.che.api.promises.client.OperationException;
 import org.eclipse.che.api.promises.client.Promise;
 import org.eclipse.che.api.promises.client.PromiseError;
 import org.eclipse.che.api.promises.client.callback.AsyncPromiseHelper;
+import org.eclipse.che.api.workspace.shared.dto.ModuleConfigDto;
 import org.eclipse.che.commons.annotation.Nullable;
 import org.eclipse.che.ide.CoreLocalizationConstant;
 import org.eclipse.che.ide.Resources;
@@ -331,9 +331,8 @@ public class ProjectExplorerPresenter extends BasePresenter implements ActionDel
 
             node.setData(newDTO);
         } else if (event.getNode() instanceof ModuleDescriptorNode) {
-            ProjectDescriptor newDTO = (ProjectDescriptor)event.getNewDataObject();
+            ModuleConfigDto newDTO = (ModuleConfigDto)event.getNewDataObject();
             ModuleDescriptorNode node = (ModuleDescriptorNode)event.getNode();
-
             node.setData(newDTO);
         }
 
@@ -382,21 +381,12 @@ public class ProjectExplorerPresenter extends BasePresenter implements ActionDel
         }
     }
 
-    private Promise<ProjectDescriptor> updateProject(final ProjectDescriptor descriptor) {
+    private Promise<ProjectDescriptor> updateProject(final ProjectDescriptor project) {
         return newPromise(new AsyncPromiseHelper.RequestCall<ProjectDescriptor>() {
             @Override
             public void makeCall(AsyncCallback<ProjectDescriptor> callback) {
-                final ProjectUpdate toUpdate = dtoFactory.createDto(ProjectUpdate.class)
-                                                         .withType(descriptor.getType())
-                                                         .withVisibility(descriptor.getVisibility())
-                                                         .withMixinTypes(descriptor.getMixins())
-                                                         .withDescription(descriptor.getDescription())
-                                                         .withAttributes(descriptor.getAttributes())
-                                                         .withContentRoot(descriptor.getContentRoot())
-                                                         .withRecipe(descriptor.getRecipe());
-
-                projectService.updateProject(descriptor.getPath(), toUpdate,
-                                             newCallback(callback, dtoUnmarshaller.newUnmarshaller(ProjectDescriptor.class)));
+                projectService.updateProject(project.getName(), project, 
+                newCallback(callback, dtoUnmarshaller.newUnmarshaller(ProjectDescriptor.class)));
             }
         }).catchError(new Operation<PromiseError>() {
             @Override
