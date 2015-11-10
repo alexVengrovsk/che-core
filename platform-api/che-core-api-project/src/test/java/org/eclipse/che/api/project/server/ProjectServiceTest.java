@@ -26,6 +26,7 @@ import org.eclipse.che.api.core.util.ValueHolder;
 import org.eclipse.che.api.project.server.handlers.CreateProjectHandler;
 import org.eclipse.che.api.project.server.handlers.GetItemHandler;
 import org.eclipse.che.api.project.server.handlers.GetModulesHandler;
+import org.eclipse.che.api.project.server.handlers.PostImportProjectHandler;
 import org.eclipse.che.api.project.server.handlers.ProjectHandlerRegistry;
 import org.eclipse.che.api.project.server.type.Attribute;
 import org.eclipse.che.api.project.server.type.AttributeValue;
@@ -1656,119 +1657,119 @@ public class ProjectServiceTest {
         assertNotNull(newProject.getConfig());
     }
 
-//    @Test
-//    public void testImportProjectWithModules() throws Exception {
-//        ByteArrayOutputStream bout = new ByteArrayOutputStream();
-//        ZipOutputStream zipOut = new ZipOutputStream(bout);
-//        zipOut.putNextEntry(new ZipEntry("module1/"));
-//        zipOut.putNextEntry(new ZipEntry("module1/marker"));
-//        zipOut.write("to be or not to be".getBytes());
-//        zipOut.close();
-//        final InputStream zip = new ByteArrayInputStream(bout.toByteArray());
-//        final String importType = "_123_";
-//        final ValueHolder<FolderEntry> folderHolder = new ValueHolder<>();
-//        importerRegistry.register(new ProjectImporter() {
-//            @Override
-//            public String getId() {
-//                return importType;
-//            }
-//
-//            @Override
-//            public boolean isInternal() {
-//                return false;
-//            }
-//
-//            @Override
-//            public String getDescription() {
-//                return "Chuck importer";
-//            }
-//
-//            @Override
-//            public void importSources(FolderEntry baseFolder, String location, Map<String, String> parameters)
-//                    throws ConflictException, ServerException, ForbiddenException {
-//                importSources(baseFolder, location, parameters, LineConsumerFactory.NULL);
-//            }
-//
-//            @Override
-//            public void importSources(FolderEntry baseFolder, String location, Map<String, String> parameters,
-//                                      LineConsumerFactory importOutputConsumerFactory)
-//                    throws ConflictException, ServerException, ForbiddenException {
-//                // Don't really use location in this test.
-//                baseFolder.getVirtualFile().unzip(zip, true, 0);
-//                folderHolder.set(baseFolder);
-//            }
-//
-//            @Override
-//            public ImporterCategory getCategory() {
-//                return ImporterCategory.ARCHIVE;
-//            }
-//        });
-//
-//        phRegistry.register(new PostImportProjectHandler() {
-//            @Override
-//            public void onProjectImported(FolderEntry projectFolder)
-//                    throws ForbiddenException, ConflictException, ServerException, IOException, NotFoundException {
-//            }
-//
-//            @Override
-//            public String getProjectType() {
-//                return "chuck_project_type";
-//            }
-//        });
-//
-//        final ProjectConfigDto newProjectConfig = DtoFactory.getInstance().createDto(ProjectConfigDto.class)
-//                                                            .withPath("/new_project")
-//                                                            .withName("new_project")
-//                                                            .withDescription("import test")
-//                                                            .withType("chuck_project_type");
-//        final ProjectConfigDto newModuleConfig = DtoFactory.getInstance().createDto(ProjectConfigDto.class)
-//                                                           .withPath("/new_project/module1")
-//                                                           .withName("module1")
-//                                                           .withDescription("module description")
-//                                                           .withType("module_type");
-//        projectConfigurations.add(newProjectConfig);
-//        projectConfigurations.add(newModuleConfig);
-//
-//        Map<String, List<String>> headers = new HashMap<>();
-//        headers.put(CONTENT_TYPE, Arrays.asList(APPLICATION_JSON));
-//
-//        Source source = DtoFactory.newDto(Source.class).withProject(DtoFactory.newDto(ImportSourceDescriptor.class)
-//                                                                              .withLocation(null)
-//                                                                              .withType(importType));
-//
-//        ProjectModule pModule = DtoFactory.newDto(ProjectModule.class)
-//                                          .withPath("/module1")
-//                                          .withType("module_type")
-//                                          .withDescription("module description");
-//
-//        NewProject project = DtoFactory.newDto(NewProject.class)
-//                                       .withVisibility("public")
-//                                       .withDescription("import test")
-//                                       .withType("chuck_project_type")
-//                                       .withModules(Arrays.asList(pModule));
-//
-//        ImportProject importProject = DtoFactory.newDto(ImportProject.class).withSource(source).withProject(project);
-//
-//        ContainerResponse response = launcher.service(POST,
-//                                                      String.format("http://localhost:8080/api/project/%s/import/new_project", workspace),
-//                                                      "http://localhost:8080/api", headers, JsonHelper.toJson(importProject).getBytes(),
-//                                                      null);
-//        assertEquals(response.getStatus(), 200, "Error: " + response.getEntity());
-//        ImportResponse importResponse = (ImportResponse)response.getEntity();
-//        ProjectDescriptor descriptor = importResponse.getProjectDescriptor();
-//        assertEquals(descriptor.getDescription(), "import test");
-//        assertEquals(descriptor.getType(), "chuck_project_type");
-//        Project newProject = pm.getProject(workspace, "new_project");
-//        assertNotNull(newProject);
-//        assertNotNull(newProject.getModules());
-//        assertEquals(newProject.getModules().get().size(), 1);
-//        Project module = pm.getProject(workspace, "new_project/module1");
-//        assertNotNull(module);
-//        ProjectConfig moduleConfig = module.getConfig();
-//        assertNotNull(moduleConfig);
-//        assertEquals(moduleConfig.getTypeId(), "module_type");
-//        assertEquals(moduleConfig.getDescription(), "module description");
-//    }
+    @Test
+    public void testImportProjectWithModules() throws Exception {
+        ByteArrayOutputStream bout = new ByteArrayOutputStream();
+        ZipOutputStream zipOut = new ZipOutputStream(bout);
+        zipOut.putNextEntry(new ZipEntry("module1/"));
+        zipOut.putNextEntry(new ZipEntry("module1/marker"));
+        zipOut.write("to be or not to be".getBytes());
+        zipOut.close();
+        final InputStream zip = new ByteArrayInputStream(bout.toByteArray());
+        final String importType = "_123_";
+        final ValueHolder<FolderEntry> folderHolder = new ValueHolder<>();
+        importerRegistry.register(new ProjectImporter() {
+            @Override
+            public String getId() {
+                return importType;
+            }
+
+            @Override
+            public boolean isInternal() {
+                return false;
+            }
+
+            @Override
+            public String getDescription() {
+                return "Chuck importer";
+            }
+
+            @Override
+            public void importSources(FolderEntry baseFolder, String location, Map<String, String> parameters)
+                    throws ConflictException, ServerException, ForbiddenException {
+                importSources(baseFolder, location, parameters, LineConsumerFactory.NULL);
+            }
+
+            @Override
+            public void importSources(FolderEntry baseFolder, String location, Map<String, String> parameters,
+                                      LineConsumerFactory importOutputConsumerFactory)
+                    throws ConflictException, ServerException, ForbiddenException {
+                // Don't really use location in this test.
+                baseFolder.getVirtualFile().unzip(zip, true, 0);
+                folderHolder.set(baseFolder);
+            }
+
+            @Override
+            public ImporterCategory getCategory() {
+                return ImporterCategory.ARCHIVE;
+            }
+        });
+
+        phRegistry.register(new PostImportProjectHandler() {
+            @Override
+            public void onProjectImported(FolderEntry projectFolder)
+                    throws ForbiddenException, ConflictException, ServerException, IOException, NotFoundException {
+            }
+
+            @Override
+            public String getProjectType() {
+                return "chuck_project_type";
+            }
+        });
+
+        final ProjectConfigDto newProjectConfig = DtoFactory.getInstance().createDto(ProjectConfigDto.class)
+                                                            .withPath("/new_project")
+                                                            .withName("new_project")
+                                                            .withDescription("import test")
+                                                            .withType("chuck_project_type");
+        final ProjectConfigDto newModuleConfig = DtoFactory.getInstance().createDto(ProjectConfigDto.class)
+                                                           .withPath("/new_project/module1")
+                                                           .withName("module1")
+                                                           .withDescription("module description")
+                                                           .withType("module_type");
+        projectConfigurations.add(newProjectConfig);
+        projectConfigurations.add(newModuleConfig);
+
+        Map<String, List<String>> headers = new HashMap<>();
+        headers.put(CONTENT_TYPE, Arrays.asList(APPLICATION_JSON));
+
+        SourceStorageDto source = DtoFactory.newDto(SourceStorageDto.class).withLocation(null)
+                                            .withType(importType);
+
+        ModuleConfigDto pModule = DtoFactory.newDto(ModuleConfigDto.class)
+                                          .withPath("/module1")
+                                          .withType("module_type")
+                                          .withDescription("module description");
+
+        ProjectConfigDto project = DtoFactory.newDto(ProjectConfigDto.class)
+                                       .withDescription("import test")
+                                       .withType("chuck_project_type")
+                                       .withModules(Arrays.asList(pModule));
+
+        ContainerResponse response1 = launcher.service(POST,
+                                                      String.format("http://localhost:8080/api/project/%s/import/new_project", workspace),
+                                                      "http://localhost:8080/api", headers, JsonHelper.toJson(source).getBytes(),
+                                                      null);
+        assertEquals(response1.getStatus(), 204, "Error: " + response1.getEntity());
+
+        ContainerResponse response = launcher.service(PUT,
+                                                      String.format("http://localhost:8080/api/project/%s/new_project", workspace),
+                                                      "http://localhost:8080/api", headers, JsonHelper.toJson(project).getBytes(),
+                                                      null);
+        assertEquals(response.getStatus(), 200, "Error: " + response.getEntity());
+
+        ProjectDescriptor descriptor = (ProjectDescriptor)response.getEntity();
+        assertEquals(descriptor.getDescription(), "import test");
+        assertEquals(descriptor.getType(), "chuck_project_type");
+        Project newProject = pm.getProject(workspace, "new_project");
+        assertNotNull(newProject);
+        Project module = pm.getProject(workspace, "new_project/module1");
+        assertNotNull(module);
+        ProjectConfig moduleConfig = module.getConfig();
+        assertNotNull(moduleConfig);
+        assertEquals(moduleConfig.getType(), "module_type");
+        assertEquals(moduleConfig.getDescription(), "module description");
+    }
 
     @Test
     public void testImportZip() throws Exception {
