@@ -24,7 +24,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertSame;
 
 /**
@@ -144,13 +143,6 @@ public class ProjectTest {
         project.updateConfig(projectConfig);
 
         verify(projectManager).updateProjectConfig(project, projectConfig);
-    }
-
-    @Test
-    public void shouldReturnModules() throws Exception {
-        final Project.Modules projectModules = project.getModules();
-
-        assertNotNull(projectModules);
     }
 
     @Test

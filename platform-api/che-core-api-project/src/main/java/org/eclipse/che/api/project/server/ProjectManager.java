@@ -262,12 +262,10 @@ public interface ProjectManager {
      * @param workspace
      *         The workspace to delete from.
      * @param path
-     *         Path to the item (file / folder / project) to delete.
-     * @param modulePath
      *         In case a module is being deleted, the module's path relative to the provided path.
      * @return True if the path was found and deleted, false if the path was not found.
      */
-    boolean delete(String workspace, String path, String modulePath)
+    boolean delete(String workspace, String path)
             throws ServerException, ForbiddenException, NotFoundException, ConflictException;
 
     /**

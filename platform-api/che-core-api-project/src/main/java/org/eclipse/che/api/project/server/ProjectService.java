@@ -92,6 +92,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 
 /**
@@ -288,11 +289,7 @@ public class ProjectService extends Service {
         if (parent == null) {
             throw new NotFoundException("Project " + path + " was not found");
         }
-        final List<ModuleConfig> modules = new LinkedList<>();
-        for (ModuleConfig module : projectManager.getProjectModules(parent)) {
-            modules.add(module);
-        }
-        return modules;
+        return projectManager.getProjectModules(parent).stream().collect(Collectors.toCollection(LinkedList::new));
     }
 
     @ApiOperation(value = "Create a new module",
@@ -619,12 +616,11 @@ public class ProjectService extends Service {
     public void delete(@ApiParam(value = "Workspace ID", required = true)
                        @PathParam("ws-id") String workspace,
                        @ApiParam(value = "Path to a resource to be deleted", required = true)
-                       @PathParam("path") String path,
-                       @QueryParam("module") String modulePath)
+                       @PathParam("path") String path)
             throws NotFoundException, ForbiddenException, ConflictException, ServerException {
         filesBuffer.addToBufferRecursive(getVirtualFileEntry(workspace, path).getVirtualFile());
 
-        if (!projectManager.delete(workspace, path, modulePath)) {
+        if (!projectManager.delete(workspace, path)) {
             throw new NotFoundException(String.format("Path '%s' doesn't exist.", path));
         }
     }
@@ -845,14 +841,11 @@ public class ProjectService extends Service {
      */
     private void reindexProject(long creationDate, FolderEntry baseProjectFolder, final Project project) throws ServerException {
         final VirtualFile file = baseProjectFolder.getVirtualFile();
-        executor.execute(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    searcherProvider.getSearcher(file.getMountPoint(), true).add(file);
-                } catch (Exception e) {
-                    LOG.warn(String.format("Workspace: %s, project: %s", project.getWorkspace(), project.getPath()), e.getMessage());
-                }
+        executor.execute(() -> {
+            try {
+                searcherProvider.getSearcher(file.getMountPoint(), true).add(file);
+            } catch (Exception e) {
+                LOG.warn(String.format("Workspace: %s, project: %s", project.getWorkspace(), project.getPath()), e.getMessage());
             }
         });
         if (creationDate > 0) {

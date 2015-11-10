@@ -65,10 +65,12 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -881,21 +883,22 @@ public final class DefaultProjectManager implements ProjectManager {
             // We should not edit Modules if resource to rename is project
             if (!projectName.equals(path) && entry.isFolder()) {
                 final Project rootProject = getProject(workspace, projectName);
-                if (rootProject != null) {
-                    // We need module path without projectName, f.e projectName/module1/oldModuleName -> module1/oldModuleName
-                    String oldModulePath = path.replaceFirst(projectName + "/", "");
-                    // Calculates new module path, f.e module1/oldModuleName -> module1/newModuleName
-                    String newModulePath = oldModulePath.substring(0, oldModulePath.lastIndexOf("/") + 1) + newName;
-
-                    rootProject.getModules().update(oldModulePath, newModulePath);
-                }
+                // TODO: rework
+//                if (rootProject != null) {
+//                    // We need module path without projectName, f.e projectName/module1/oldModuleName -> module1/oldModuleName
+//                    String oldModulePath = path.replaceFirst(projectName + "/", "");
+//                    // Calculates new module path, f.e module1/oldModuleName -> module1/newModuleName
+//                    String newModulePath = oldModulePath.substring(0, oldModulePath.lastIndexOf("/") + 1) + newName;
+//
+//                    rootProject.getModules().update(oldModulePath, newModulePath);
+//                }
             }
         }
         return entry;
     }
 
     @Override
-    public boolean delete(String workspace, String path, String modulePath)
+    public boolean delete(String workspace, String path)
             throws ServerException, ForbiddenException, NotFoundException, ConflictException {
         final FolderEntry root = getProjectsRoot(workspace);
         final VirtualFileEntry entry = root.getChild(path);
@@ -903,30 +906,16 @@ public final class DefaultProjectManager implements ProjectManager {
             return false;
         }
 
-        final Project project = getProject(workspace, path);
+        final ProjectConfig project = getProjectFromWorkspace(workspace, path);
+
         if (project != null) {
-            // In case of project extract some information about project for logger before delete project.
-            // remove module only
-            if (modulePath != null) {
-                RemoveModuleHandler removeModuleHandler = this.getHandlers().getRemoveModuleHandler(project.getConfig().getType());
-                if (removeModuleHandler != null) {
-                    removeModuleHandler.onRemoveModule(project.getBaseFolder(), modulePath, project.getConfig());
-                }
-                Set<String> modules = project.getModules().get();
-                if (modules == null || modules.isEmpty()) {
-                    return false;
-                }
-
-                modulePath = modules.contains(modulePath) ? modulePath : project.getPath() + "/" + modulePath;
-                return project.getModules().remove(modulePath);
-            }
-
+            // Remove whole project
             final String projectName = project.getName();
             String projectType = null;
             try {
-                projectType = project.getConfig().getType();
+                projectType = project.getType();
                 deleteProjectFromWorkspace(workspace, project.getName());
-            } catch (ServerException | ValueStorageException | ProjectTypeConstraintException e) {
+            } catch (ServerException e) {
                 // Let delete even project in invalid state.
                 LOG.warn(String.format("Removing not valid project ws : %s, project path: %s ", workspace, path) + e.getMessage(), e);
             }
@@ -937,6 +926,46 @@ public final class DefaultProjectManager implements ProjectManager {
                      EnvironmentContext.getCurrent().getWorkspaceName(),
                      EnvironmentContext.getCurrent().getUser().getName());
         } else {
+            // find if path is a module
+            ModuleConfig parentConfig = null;
+            if (!path.startsWith(File.separator)) {
+                path = File.separator + path;
+            }
+            String [] parts = path.split(String.format("(?=[%s])", File.separator));
+            ProjectConfigDto projectConfig = getProjectFromWorkspace(workspace, parts[0]);
+            ModuleConfig tmp = projectConfig;
+            boolean isModuleFound = false;
+            if (tmp != null) {
+                StringBuilder strBuilder = new StringBuilder(parts[0]);
+                for (int i = 1; i < parts.length; i++) {
+                    strBuilder.append(parts[i]);
+                    Optional<? extends  ModuleConfig> optional = findModuleWithPath(tmp, strBuilder.toString());
+                    if (optional.isPresent()) {
+                        isModuleFound = true;
+                        tmp = optional.get();
+                    } else {
+                        isModuleFound = false;
+                        break;
+                    }
+                }
+               parentConfig = tmp;
+            }
+
+            if (isModuleFound) {
+                RemoveModuleHandler removeModuleHandler = this.getHandlers().getRemoveModuleHandler(parentConfig.getType());
+                if (removeModuleHandler != null) {
+                    removeModuleHandler.onRemoveModule((FolderEntry)entry, path, parentConfig);
+                }
+
+                Iterator<? extends ModuleConfig> it = parentConfig.getModules().iterator();
+                while (it.hasNext()) {
+                    if (it.next().getPath().equals(path)) {
+                        it.remove();
+                    }
+                }
+                updateProjectInWorkspace(workspace, projectConfig);
+            }
+
             eventService.publish(new ProjectItemModifiedEvent(ProjectItemModifiedEvent.EventType.DELETED, workspace,
                                                               projectPath(entry.getPath()), entry.getPath(), entry.isFolder()));
             entry.remove();
