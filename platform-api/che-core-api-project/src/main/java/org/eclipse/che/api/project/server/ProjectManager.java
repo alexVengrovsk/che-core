@@ -279,7 +279,7 @@ public interface ProjectManager {
     boolean isProjectFolder(FolderEntry folder) throws ServerException;
 
     /**
-     * Tests whether the {@code folder} contains pom.xml.
+     * Tests whether the {@code folder} is a project module.
      *
      * @throws ServerException
      *         if an error occurs

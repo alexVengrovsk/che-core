@@ -968,7 +968,8 @@ public final class DefaultProjectManager implements ProjectManager {
 
     @Override
     public boolean isModuleFolder(FolderEntry folder) throws ServerException {
-        String [] parts = folder.getPath().split("(?=[" + File.separator + "])");
+        //Split with lookahead to save separators
+        String [] parts = folder.getPath().split(String.format("(?=[%s])", File.separator));
         ModuleConfig tmp = getProjectFromWorkspace(folder.getWorkspace(), parts[0]);
         if (tmp != null) {
             StringBuilder strBuilder = new StringBuilder(parts[0]);
@@ -977,7 +978,6 @@ public final class DefaultProjectManager implements ProjectManager {
                 Optional<? extends  ModuleConfig> optional = findModuleWithPath(tmp, strBuilder.toString());
                 if (optional.isPresent()) {
                     tmp = optional.get();
-                    continue;
                 } else {
                     return  false;
                 }
